@@ -193,6 +193,7 @@ details.more{border:1px solid var(--line);border-radius:14px;padding:4px 12px}de
 .sheet-bg{position:absolute;inset:0;z-index:45;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;animation:fade .25s}
 @keyframes fade{from{opacity:0}}
 .sheet{width:100%;max-height:80%;overflow-y:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:18px 16px 24px;animation:up .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;gap:12px}
+.sheet>*,.ob>*{flex-shrink:0} /* conteúdo não é esmagado nem sobreposto: a folha rola */
 .grab{width:40px;height:4px;border-radius:2px;background:#44444e;margin:-6px auto 4px}
 .plan{border-radius:22px;padding:18px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:10px}
 .plan.hot{border:1.5px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,var(--grad) border-box}
@@ -1252,7 +1253,7 @@ const RULES = [
   [/^Gerando cena (\d+) de (\d+)…$/, (l, m) => (l === "en" ? "Generating scene " + m[1] + " of " + m[2] + "…" : "Generando escena " + m[1] + " de " + m[2] + "…")],
   [/^A cena (\d+) falhou$/, (l, m) => (l === "en" ? "Scene " + m[1] + " failed" : "La escena " + m[1] + " falló")],
   [/^(\d+) ok · (\d+) falhas · (\d+) no total$/, (l, m) => (l === "en" ? m[1] + " ok · " + m[2] + " failed · " + m[3] + " total" : m[1] + " ok · " + m[2] + " fallos · " + m[3] + " en total")],
-  [/^Etapa (\d+) de (\d+)$/, (l, m) => (l === "en" ? "Step " + m[1] + " of " + m[2] : "Paso " + m[1] + " de " + m[2])],
+  [/^Etapa (\d+) de (\d+)(.*)$/, (l, m) => (l === "en" ? "Step " + m[1] + " of " + m[2] : l === "es" ? "Paso " + m[1] + " de " + m[2] : "Etapa " + m[1] + " de " + m[2]) + (l === "pt-BR" ? m[3] : "")],
   [/^(\d+)\/(\d+) · mínimo 3$/, (l, m) => m[1] + "/" + m[2] + (l === "en" ? " · minimum 3" : " · mínimo 3")],
   [/^Plano (Free|Pro|Business)$/, (l, m) => (l === "en" ? "Plan " : "Plan ") + m[1]],
   [/^(\d+) créditos?$/, (l, m) => m[1] + (l === "en" ? (m[1] === "1" ? " credit" : " credits") : (m[1] === "1" ? " crédito" : " créditos"))],
@@ -1526,7 +1527,11 @@ function guardGen(app, count) {
   const s = app.get();
   if (accountBlocked(app) || !needOnline(app)) return false;
   if (!flagOn(s, "generation_enabled")) { app.toast(tr("maint.title"), "err"); olog("warn", "generation.blocked", { userId: s.user.id, status: "kill_switch" }); return false; }
-  if (!consentOf(s, "ai")) { app.toast(tr("gen.noconsent"), "err"); return false; }
+  if (!consentOf(s, "ai")) {
+    const revoked = (s.consentRecords || []).some((x) => x.userId === s.user.id && x.type === "ai" && x.revokedAt);
+    if (revoked) { app.toast(tr("gen.noconsent"), "err"); return false; }
+    act(app, (s2) => ({ consentRecords: [...(s2.consentRecords || []), mkConsent(s2.user.id, "ai")], ...auditE(s2, "consent.grant", "ai", CONSENT_VERSION) })); // quem aceitou os termos e nunca recusou a IA não precisa procurar configuração
+  }
   if (count && !RL.take("gen:" + s.user.id, LIM.gen.max, LIM.gen.win)) { app.toast(tr("gen.limit", { max: LIM.gen.max }), "err"); olog("warn", "generation.rate_limited", { userId: s.user.id, status: "limited" }); return false; }
   return true;
 }
@@ -2543,7 +2548,7 @@ function Onboarding() {
         if (st.status === "verify_email") { setForm((x) => ({ ...x, verify: st.email, info: kind === "verified" ? "Ainda não confirmado. Abra o link do e-mail e tente de novo." : "" })); return; }
         await api.firebaseLogin(st.idToken, document.documentElement.lang || "pt-BR"); await enter(api); return;
       }
-      if (kind === "signup") await api.register({ email: form.email, password: form.password, name: form.email.split("@")[0], birthDate: "1990-01-01" }); else await api.login(form.email, form.password);
+      if (kind === "signup") await api.register({ email: form.email, password: form.password, name: form.email.split("@")[0] }); else await api.login(form.email, form.password);
       await enter(api);
     } catch (e) { setForm((f) => ({ ...f, err: fbErr(e) })); } finally { setBusy(""); }
   };
@@ -2792,32 +2797,33 @@ function Create() {
   const header = html`
     <div className="top" style=${{ paddingBottom: 6 }}>
       ${w.step > 1 && !busy ? html`<${Back} onClick=${() => set({ step: w.step === 5 ? (sectionsOn ? 2 : 3) : w.step - 1 })} />` : null}
-      <div className="grow"><div className="h2">Novo vídeo</div><div className="muted small">Etapa ${w.step} de 5</div></div>
+      <div className="grow"><div className="h2">Novo vídeo</div><div className="muted small">Etapa ${w.step} de 5${sectionsOn ? " · " + ["Texto e fotos", "Edição", "Voz e música", "Gerando", "Pronto"][w.step - 1] : ""}</div></div>
       ${w.step === 5 ? html`<button className="btn btn-ghost btn-sm" onClick=${() => dispatch({ type: "wizReset" })}>Criar outro</button>` : w.step >= 2 && !busy ? html`<button className="btn btn-ghost btn-sm" onClick=${saveDraft}>Salvar rascunho</button>` : null}
     </div>
-    <div className="steps">${[1, 2, 3, 4, 5].map((k) => html`<i key=${k} className=${k <= w.step ? "on" : ""}></i>`)}</div>`;
+    <div className="steps">${[1, 2, 3, 4, 5].map((k) => html`<i key=${k} className=${k <= w.step ? "on" : ""}></i>`)}</div>
+    ${sectionsOn && html`<p className="small" id="step-hint" style=${{ margin: "10px 2px 0", color: "var(--muted, #a9a9b6)" }}>${["Escreva o que o vídeo vai falar e escolha suas fotos. Depois toque em Continuar.", "Toque numa seção para editar a foto, o movimento e o texto. Cada seção tem até 15 segundos.", "Escolha a voz, a música e se quer legenda. Depois toque em Gerar vídeo.", "Estamos montando o seu vídeo. Pode levar alguns minutos; não feche o app.", "Seu vídeo está pronto. Toque para assistir ou salvar."][w.step - 1]}</p>`}`;
 
   let body = null;
   if (w.step === 1) body = html`
     <div className="stack">
       ${!flagOn(state, "generation_enabled") && html`<div className="card stack" id="maint-card" role="alert" style=${{ gap: 4, borderColor: "var(--warn)" }}><b>${tr("maint.title")}</b><p className="small muted">${tr("maint.body")}</p></div>`}
-      <div className="field"><label className="label" htmlFor="script">Roteiro ou descrição do produto</label>
+      <div className="field"><label className="label" htmlFor="script">${sectionsOn ? "O que o vídeo vai falar?" : "Roteiro ou descrição do produto"}</label>
         <textarea id="script" className="input" rows="5" placeholder="Ex.: Anúncio de 60s para uma bicicleta elétrica, mostrando design, performance na cidade e depoimentos." value=${w.script} onChange=${(e) => set({ script: e.target.value })}></textarea>
         <div className="chips" data-noswipe>${EXAMPLES.map((x, i) => html`<button key=${i} className="chip tap" onClick=${() => set({ script: x })}>Exemplo ${i + 1}</button>`)}</div></div>
-      <div className="card stack" style=${{ gap: 10 }}>
+      ${!sectionsOn && html`<div className="card stack" style=${{ gap: 10 }}>
         <div className="row" style=${{ gap: 10 }}><span style=${{ width: 38, height: 38, borderRadius: 12, background: "var(--grad)", display: "grid", placeItems: "center", flex: "none" }}><${Icon} n="bulb" size=${20} /></span><div style=${{ minWidth: 0 }}><b>Precisa de ideias de fotos?</b><div className="muted small">A PhotoCoach sugere o que fotografar antes de gerar o vídeo.</div></div></div>
         <div style=${{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <button className="btn btn-ghost btn-sm" style=${{ lineHeight: 1.2, padding: "8px 10px" }} onClick=${() => dispatch({ type: "overlay", overlay: { type: "coach", mode: "product" } })}>Fotos do produto</button>
-          <button className="btn btn-ghost btn-sm" style=${{ lineHeight: 1.2, padding: "8px 10px" }} onClick=${() => dispatch({ type: "overlay", overlay: { type: "coach", mode: "person" } })}>Minhas fotos (selfie/social)</button></div></div>
-      <div className="field"><div className="row"><span className="label">Fotos de referência</span><div className="spacer"></div><span className=${"small " + (w.photos.length >= minPhotos ? "badge-ok" : "muted")}>${w.photos.length}/${maxPhotos} · mínimo ${minPhotos}</span></div>
+          <button className="btn btn-ghost btn-sm" style=${{ lineHeight: 1.2, padding: "8px 10px" }} onClick=${() => dispatch({ type: "overlay", overlay: { type: "coach", mode: "person" } })}>Minhas fotos (selfie/social)</button></div></div>`}
+      <div className="field"><div className="row"><span className="label">${sectionsOn ? "Suas fotos" : "Fotos de referência"}</span><div className="spacer"></div><span className=${"small " + (w.photos.length >= minPhotos ? "badge-ok" : "muted")}>${sectionsOn ? w.photos.length + " de " + maxPhotos + " · pelo menos 1" : w.photos.length + "/" + maxPhotos + " · mínimo " + minPhotos}</span></div>
         <div className="photos">
           ${w.photos.map((p, i) => html`<div className="ph" key=${p.id} style=${{ background: p.bg }}><button className="rm" aria-label="Remover foto" onClick=${() => set({ photos: w.photos.filter((x) => x.id !== p.id) })}><${Icon} n="x" size=${14} /></button><span className="pill n">${p.mode === "person" ? "Pessoa" : p.mode === "product" ? "Produto" : i === 0 ? "Principal" : "Foto " + (i + 1)}</span></div>`)}
           ${w.photos.length < maxPhotos && html`<button className="ph add tap" onClick=${() => fileRef.current.click()}><${Icon} n="upload" size=${22} />Enviar foto</button>`}
         </div>
         <input ref=${fileRef} id="photo-input" type="file" accept="image/*" multiple hidden onChange=${(e) => { addFiles(e.target.files); e.target.value = ""; }} />
         <button className="btn btn-ghost btn-sm" onClick=${() => set({ photos: SAMPLE_PHOTOS.slice(0, 4).map((p) => ({ ...p, id: uid() })) })}><${Icon} n="image" size=${18} /> Usar fotos de exemplo</button></div>
-      <button className="btn btn-primary btn-block" disabled=${!canNext || !flagOn(state, "generation_enabled")} onClick=${goStoryboard}><${Icon} n="zap" size=${18} /> ${sectionsOn ? "Montar as seções" : "Gerar storyboard"}</button>
-      ${!canNext && html`<p className="muted small" style=${{ textAlign: "center" }}>Escreva o roteiro e envie ao menos ${minPhotos} foto${minPhotos > 1 ? "s" : ""}.</p>`}
+      <button className="btn btn-primary btn-block" disabled=${!canNext || !flagOn(state, "generation_enabled")} onClick=${goStoryboard}><${Icon} n="zap" size=${18} /> ${sectionsOn ? "Continuar" : "Gerar storyboard"}</button>
+      ${!canNext && html`<p className="muted small" style=${{ textAlign: "center" }}>${sectionsOn ? "Escreva o texto do vídeo (pelo menos uma frase) e envie ao menos 1 foto." : "Escreva o roteiro e envie ao menos " + minPhotos + " foto" + (minPhotos > 1 ? "s" : "") + "."}</p>`}
     </div>`;
   if (w.step === 2 && sectionsOn) body = w.loadingBoard ? html`<div className="stack"><div className="skeleton sk-card" style=${{ width: "100%", aspectRatio: "auto", height: 180 }}></div><div className="skeleton sk-card" style=${{ width: "100%", aspectRatio: "auto", height: 180 }}></div></div>` : html`<${Sections} onNext=${() => set({ step: 3 })} />`;
   else if (w.step === 2) body = html`
@@ -4313,32 +4319,28 @@ function Settings({ view0 }) {
 /* ---------- Consentimento + idade no onboarding ---------- */
 function ConsentStep() {
   const app = useApp();
-  const { state, dispatch } = app;
-  const [c, setC] = useState({ terms: false, cookies: false, ai: false, marketing: false });
-  const [birth, setBirth] = useState("");
-  const [guardian, setGuardian] = useState(false);
+  const [ok, setOk] = useState(false);
   const [legal, setLegal] = useState(false);
-  const age = birth ? ageFrom(birth) : -1;
-  const valid = age >= 13 && age < 120 && (age >= 18 || guardian) && c.terms;
+  const L = app.state.locale === "en" ? "en" : app.state.locale === "es" ? "es" : "pt-BR";
+  const T = {
+    "pt-BR": { h: "Antes de começar", sub: "Só uma confirmação e você já pode criar seu vídeo.", chk: "Li e aceito os Termos e a Política de Privacidade, e permito usar IA para criar os meus vídeos. Tenho 13 anos ou mais.", read: "Ler Termos e Privacidade", go: "Começar", need: "Marque a caixa acima para continuar." },
+    en: { h: "Before you start", sub: "One confirmation and you can create your video.", chk: "I have read and accept the Terms and the Privacy Policy, and allow AI to create my videos. I am 13 or older.", read: "Read Terms and Privacy", go: "Start", need: "Tick the box above to continue." },
+    es: { h: "Antes de empezar", sub: "Una confirmación y ya puedes crear tu video.", chk: "Leí y acepto los Términos y la Política de Privacidad, y permito usar IA para crear mis videos. Tengo 13 años o más.", read: "Leer Términos y Privacidad", go: "Empezar", need: "Marca la casilla de arriba para continuar." },
+  }[L];
   const go = () => {
-    if (!valid) { app.toast(tr("ob.accept.required"), "err"); return; }
-    act(app, (s) => ({ consentRecords: [...s.consentRecords.filter((r) => r.userId !== s.user.id), ...CONSENT_TYPES.filter((t) => c[t]).map((t) => mkConsent(s.user.id, t))], birth, onboarded: true, ...auditE(s, "consent.onboarding", s.user.id, CONSENT_VERSION) }));
-    olog("info", "consent.onboarding", { userId: "u1", status: CONSENT_TYPES.filter((t) => c[t]).join(",") });
+    if (!ok) { app.toast(T.need, "err"); return; }
+    act(app, (s) => ({ consentRecords: [...s.consentRecords.filter((r) => r.userId !== s.user.id), ...["terms", "ai"].map((t) => mkConsent(s.user.id, t))], onboarded: true, ...auditE(s, "consent.onboarding", s.user.id, CONSENT_VERSION) }));
+    olog("info", "consent.onboarding", { userId: "u1", status: "terms,ai" });
   };
-  const Row = ({ t, req }) => html`<button className="card row tap" style=${{ gap: 12, textAlign: "left", width: "100%", padding: 12 }} role="checkbox" aria-checked=${c[t]} onClick=${() => setC((x) => ({ ...x, [t]: !x[t] }))}><span className=${"check " + (c[t] ? "on" : "")}>${c[t] && html`<${Icon} n="check" size=${16} sw=${3} />`}</span><span className="small" style=${{ flex: 1 }}>${tr("consent." + t)}${req && html`<span className="pill" style=${{ marginLeft: 6, background: "#2a2a32" }}>${tr("consent.required")}</span>`}</span></button>`;
   return html`
-    <div className="ob" style=${{ padding: 20, gap: 12, overflowY: "auto" }} id="consent-step">
+    <div className="ob" style=${{ padding: 20, gap: 14, overflowY: "auto" }} id="consent-step">
       <${LangChips} />
-      <h1 className="h1">${tr("ob.consent.title")}</h1>
-      <p className="muted small">${tr("ob.consent.sub")}</p>
-      <div className="stack" style=${{ gap: 8 }}>
-        ${Row({ t: "terms", req: true })}${Row({ t: "ai" })}${Row({ t: "cookies" })}${Row({ t: "marketing" })}
-        <button className="btn btn-ghost btn-sm" onClick=${() => setLegal(true)}>${tr("legal.privacy")} · ${tr("legal.terms")}</button></div>
-      <div className="field"><label className="label" htmlFor="birth">${tr("ob.age.birth")}</label><input id="birth" className=${"input " + (birth && age < 13 ? "bad" : "")} type="date" value=${birth} max=${new Date().toISOString().slice(0, 10)} onChange=${(e) => setBirth(e.target.value)} />
-        ${birth && age >= 0 && age < 13 && html`<span className="small badge-err" role="alert">${tr("ob.age.under13")}</span>`}</div>
-      ${age >= 13 && age < 18 && html`<button className="card row tap" style=${{ gap: 12, textAlign: "left", padding: 12 }} role="checkbox" aria-checked=${guardian} onClick=${() => setGuardian(!guardian)}><span className=${"check " + (guardian ? "on" : "")}>${guardian && html`<${Icon} n="check" size=${16} sw=${3} />`}</span><span className="small">${tr("ob.age.minor")}</span></button>`}
-      <p className="muted small">${tr("ob.age.stub")}</p>
-      <button className="btn btn-primary btn-block" aria-disabled=${!valid} style=${{ opacity: valid ? 1 : 0.5 }} onClick=${go}>${tr("ob.continue")}</button>
+      <h1 className="h1">${T.h}</h1>
+      <p className="muted">${T.sub}</p>
+      <button className="card row tap" style=${{ gap: 12, textAlign: "left", width: "100%", padding: 14, alignItems: "flex-start" }} role="checkbox" aria-checked=${ok} onClick=${() => setOk(!ok)}><span className=${"check " + (ok ? "on" : "")}>${ok && html`<${Icon} n="check" size=${16} sw=${3} />`}</span><span style=${{ flex: 1 }}>${T.chk}</span></button>
+      <button className="btn btn-ghost btn-sm" onClick=${() => setLegal(true)}>${T.read}</button>
+      <div style=${{ flex: 1 }}></div>
+      <button className="btn btn-primary btn-block" aria-disabled=${!ok} style=${{ opacity: ok ? 1 : 0.5 }} onClick=${go}>${T.go}</button>
       ${legal && html`<${LegalSheet} onClose=${() => setLegal(false)} />`}
     </div>`;
 }

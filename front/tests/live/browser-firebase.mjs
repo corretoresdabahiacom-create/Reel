@@ -23,7 +23,7 @@ async function session() {
   await p.goto(FRONT_URL); await p.getByRole('button', { name: 'Pular' }).click(); await p.waitForSelector('#live-email');
   return { run, p, errs, calls };
 }
-const consent = async (p) => { await p.waitForSelector('#consent-step', { timeout: 15000 }); await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await cbs.nth(1).click(); await p.locator('#consent-step button:not([role])').last().click(); await p.waitForSelector('.tabbar', { timeout: 10000 }); };
+const consent = async (p) => { await p.waitForSelector('#consent-step', { timeout: 15000 }); await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await p.locator('#consent-step button:not([role])').last().click(); await p.waitForSelector('.tabbar', { timeout: 10000 }); };
 const email = `fb-${Date.now()}@test.dev`; const pass1 = 'Sup3rSecret!pass'; const pass2 = 'Outr4Senha!forte';
 let s;
 try {

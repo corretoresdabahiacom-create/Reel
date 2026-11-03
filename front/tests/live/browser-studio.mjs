@@ -30,7 +30,7 @@ try {
   await p.goto(FRONT_URL); await p.getByRole('button', { name: 'Pular' }).click();
   await p.fill('#live-email', `estudio-${Date.now()}@test.dev`); await p.fill('#live-password', 'Sup3rSecret!pass'); await p.click('#live-signup-btn');
   await p.waitForFunction(() => window.nxMe, null, { timeout: 15000 });
-  await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await cbs.nth(1).click();
+  await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click();
   await p.locator('#consent-step button:not([role])').last().click(); await p.waitForSelector('.tabbar', { timeout: 10000 });
   await p.click('.tab-create'); await p.fill('#script', SCRIPT);
   await p.locator('input[type=file][multiple]').first().setInputFiles(['a', 'b', 'c'].map((n) => ({ name: `f-${n}.png`, mimeType: 'image/png', buffer: PNG })));

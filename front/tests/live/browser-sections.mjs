@@ -29,7 +29,7 @@ try {
   await p.goto(FRONT_URL); await p.getByRole('button', { name: 'Pular' }).click();
   await p.fill('#live-email', `sec-${Date.now()}@test.dev`); await p.fill('#live-password', 'Sup3rSecret!pass'); await p.click('#live-signup-btn');
   await p.waitForFunction(() => window.nxMe, null, { timeout: 15000 });
-  await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await cbs.nth(1).click();
+  await p.fill('#birth', '1990-01-01').catch(() => {}); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click();
   await p.locator('#consent-step button:not([role])').last().click(); await p.waitForSelector('.tabbar', { timeout: 10000 });
   // 1. feed limpo
   await shot('1-feed');
@@ -38,7 +38,7 @@ try {
   // 2. seções a partir do roteiro
   await p.click('.tab-create'); await p.fill('#script', SCRIPT);
   await p.locator('input[type=file][multiple]').first().setInputFiles(['a', 'b', 'c'].map((n) => ({ name: `f-${n}.png`, mimeType: 'image/png', buffer: PNG })));
-  await p.getByRole('button', { name: 'Montar as seções' }).click(); await p.waitForSelector('[data-sec]', { timeout: 30000 });
+  await p.getByRole('button', { name: 'Continuar' }).click(); await p.waitForSelector('[data-sec]', { timeout: 30000 });
   ok('roteiro de ~28 s vira 2 seções de até 15 s', (await secs()) === 2, String(await secs()));
   await shot('2-secoes');
   // 3. auto-divisão: passa de 15 s → o resto vai para a próxima seção sozinho

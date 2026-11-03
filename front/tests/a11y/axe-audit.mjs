@@ -56,7 +56,7 @@ for (const width of [390, 1280]) {
   await audit(p, tag('onboarding'));
   await p.getByRole('button', { name: 'Pular' }).first().click(); await audit(p, tag('login')); await keyboard(p, tag('login'), 12);
   await p.locator('button', { hasText: 'Google' }).first().click(); await p.waitForSelector('#consent-step'); await audit(p, tag('consentimento'));
-  await p.fill('#birth', '1990-05-10'); const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await cbs.nth(1).click();
+  const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click();
   await p.locator('#consent-step button:not([role])').last().click(); await p.waitForSelector('.tabbar');
   const tabs = ['feed', 'criar', 'biblioteca', 'publicar', 'perfil'];
   for (const [i, n] of tabs.entries()) { await p.locator('.tabbar button').nth(i).click(); await p.waitForFunction((k) => document.querySelectorAll('.tabbar button')[k].getAttribute('aria-current') === 'page' && !document.querySelector('.skeleton'), i); await audit(p, tag(n));

@@ -20,7 +20,7 @@ try {
   await p.waitForFunction(() => window.nxMe, null, { timeout: 15000 });
   // consentimento (mesmo passo do protótipo)
   await p.fill('#birth', '1990-01-01').catch(() => {});
-  const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click(); await cbs.nth(1).click();
+  const cbs = p.locator('#consent-step [role=checkbox]'); await cbs.nth(0).click();
   await p.locator('#consent-step button:not([role])').last().click();
   await p.waitForSelector('.tabbar', { timeout: 10000 });
   ok('login real → app aberto', true);
