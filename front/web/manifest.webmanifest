@@ -1,0 +1,21 @@
+{
+  "name": "NexusReel",
+  "short_name": "NexusReel",
+  "description": "Vídeos de até 60s a partir de texto e fotos, publicados em várias plataformas.",
+  "id": "/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0B12",
+  "theme_color": "#0B0B12",
+  "lang": "pt-BR",
+  "dir": "auto",
+  "categories": ["productivity", "social", "photo"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [{"name": "Criar vídeo", "url": "./index.html#/create"}]
+}

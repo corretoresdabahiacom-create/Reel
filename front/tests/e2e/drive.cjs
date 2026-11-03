@@ -1,0 +1,98 @@
+const { JSDOM } = require('jsdom'); const fs = require('fs');
+const src = fs.readFileSync(require('path').join(__dirname, '../../prototype-nexusreel.html'), 'utf8');
+const app = src.slice(src.lastIndexOf('<script>') + 8, src.lastIndexOf('</script>'));
+const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { runScripts: 'outside-only', pretendToBeVisual: true, url: 'https://x.test/', beforeParse(win) { Object.defineProperty(win.navigator, 'languages', { get: () => ['pt-BR'] }); Object.defineProperty(win.navigator, 'language', { get: () => 'pt-BR' }); } });
+const w = dom.window, errors = [];
+w.console.error = (...a) => errors.push('ERR ' + a.map(String).join(' ').slice(0, 300));
+w.console.warn = (...a) => errors.push('WARN ' + a.map(String).join(' ').slice(0, 300));
+w.addEventListener('error', (e) => errors.push('UNCAUGHT ' + e.message));
+w.eval(fs.readFileSync(require('path').join(__dirname, '../../web/vendor/react.production.min.js'), 'utf8'));
+w.eval(fs.readFileSync(require('path').join(__dirname, '../../web/vendor/react-dom.production.min.js'), 'utf8'));
+w.eval(fs.readFileSync(require('path').join(__dirname, '../../web/vendor/htm.js'), 'utf8'));
+w.eval(app);
+const d = w.document, wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const all = (sel) => Array.from(d.querySelectorAll(sel));
+const btn = (t, root = d) => Array.from(root.querySelectorAll('button')).find((b) => b.textContent.trim().includes(t));
+let ci=0; const click = (el) => { ci++; if (!el) throw new Error('click #'+ci);  el.dispatchEvent(new w.MouseEvent('click', { bubbles: true })); };
+const until = async (fn, ms = 40000, label = '') => { const t = Date.now(); while (Date.now() - t < ms) { if (fn()) return true; await wait(100); } throw new Error('timeout: ' + label); };
+const type = (el, v) => { const proto = el.tagName === 'TEXTAREA' ? w.HTMLTextAreaElement.prototype : w.HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, v); el.dispatchEvent(new w.Event('input', { bubbles: true })); };
+const log = [];
+const ok = (k, v) => log.push((v ? 'OK   ' : 'FAIL ') + k);
+(async () => {
+  try {
+    await wait(300);
+    click(btn('Pular')); await wait(100); click(btn('Continuar com Google')); await until(() => d.querySelector('#consent-step'), 5000, 'consent');
+    { const inp = d.querySelector('#birth'); Object.getOwnPropertyDescriptor(w.HTMLInputElement.prototype, 'value').set.call(inp, '1990-01-01'); inp.dispatchEvent(new w.Event('input', { bubbles: true })); inp.dispatchEvent(new w.Event('change', { bubbles: true })); await wait(100);
+      const cbs = Array.from(d.querySelectorAll('#consent-step [role=checkbox]')); click(cbs[0]); click(cbs[1]); await wait(100);
+      click(Array.from(d.querySelectorAll('#consent-step button')).filter((b) => !b.hasAttribute('role')).pop()); }
+    await until(() => d.querySelector('.tabbar'), 5000, 'login');
+    ok('login e abas', all('.tabbar button').length === 5);
+    click(d.querySelector('.tab-create')); await wait(200);
+    type(d.querySelector('#script'), 'Anúncio de 60s para uma bicicleta elétrica urbana, mostrando o design moderno, a performance na cidade, a bateria que dura o dia todo, o conforto no trânsito, a economia no mês e depoimentos de clientes satisfeitos que usam todos os dias para ir ao trabalho.');
+    await wait(100);
+    // PhotoCoach produto
+    click(btn('Fotos do produto')); await until(() => d.querySelector('.overlay'), 3000, 'coach');
+    click(btn('Sugerir fotos')); await until(() => all('.icard').length >= 6 && btn('Enviar esta foto'), 8000, 'ideias produto');
+    ok('produto >= 6 sugestões', all('.icard').length >= 6);
+    ok('storyboard sugerido', d.body.textContent.includes('Storyboard sugerido'));
+    click(btn('Usar foto de exemplo', all('.icard')[0])); await wait(150);
+    click(btn('Usar foto de exemplo', all('.icard')[1])); await wait(150);
+    click(btn('Minhas fotos', d.querySelector('.overlay .seg'))); await wait(100);
+    click(btn('Sugerir poses')); await until(() => all('.icard').length >= 6, 8000, 'ideias pessoa');
+    ok('pessoa >= 6 sugestões', all('.icard').length >= 6);
+    ok('dicas redes sociais', d.body.textContent.includes('Dicas para redes sociais'));
+    const t1 = all('.icard b')[0].textContent;
+    click(btn('Gerar variações')); await wait(200); await until(() => all('.icard').length >= 6 && !d.querySelector('.skeleton.icard'), 8000, 'variações');
+    click(btn('Usar foto de exemplo', all('.icard')[0])); await wait(150);
+    ok('contagem de fotos por modo', d.body.textContent.includes('Produto 2 · Pessoa 1'));
+    click(btn('Concluir', d.querySelector('.overlay'))); await wait(200);
+    ok('PhotoCoach fechou e fotos na etapa 1', !d.querySelector('.overlay') && all('.ph').length >= 3);
+    click(btn('Gerar storyboard')); await until(() => all('.scard').length >= 6, 8000, 'storyboard');
+    const n = all('.scard').length; ok('storyboard 6-8 cenas (' + n + ')', n >= 6 && n <= 8);
+    ok('referenceMode nas cenas', d.body.textContent.includes('Produto + pessoa'));
+    click(btn('Continuar')); await wait(150);
+    click(btn('Ajustes')); await until(() => d.querySelector('.sheet'), 2000, 'editor etapa 3');
+    ok('editor na etapa 3 com overrides', d.body.textContent.includes('Voz desta cena') && d.body.textContent.includes('As cenas ainda não foram geradas'));
+    click(d.querySelector('.sheet-bg')); await wait(100);
+    click(btn('Gerar vídeo de 60s'));
+    await until(() => d.querySelector('.vt'), 4000, 'timeline');
+    ok('timeline vertical', all('.vt-row').length === n);
+    await until(() => btn('Tentar novamente'), 60000, 'falha simulada');
+    ok('falha simulada + retry (cena ' + (all('.vt-row').findIndex((r) => r.textContent.includes('Tentar novamente')) + 1) + ')', true);
+    ok('cenas anteriores preservadas', all('.rg.done').length >= 1);
+    ok('chaining visível', d.body.textContent.includes('usando frame da Cena'));
+    click(btn('Tentar novamente'));
+    await until(() => d.body.textContent.includes('Consistência média'), 60000, 'etapa 5');
+    ok('vídeo final após retry', all('.tl-item').length === n);
+    ok('confete', !!d.querySelector('.confetti'));
+    ok('scrubber e mute', !!d.querySelector('.ptime input[type=range]') && !!d.querySelector('.ptime button'));
+    // refazer uma cena
+    const before = all('.tl-item')[2].textContent;
+    click(all('.tl-item')[2]); await until(() => d.querySelector('.sheet'), 2000, 'editor');
+    type(d.querySelector('#ed-text'), 'Texto novo para a cena três.'); await wait(100);
+    click(btn('Refazer esta cena')); await until(() => d.body.textContent.includes('refeita e vídeo remontado'), 20000, 'refazer');
+    ok('refazer 1 cena (versão 2)', d.body.textContent.includes('Versão 2'));
+    click(d.querySelector('.sheet-bg')); await wait(100);
+    click(btn('Salvar rascunho', d.querySelector('.stack'))); await wait(100);
+    // biblioteca
+    click(all('.tabbar button')[2]); await wait(300); await until(() => !d.querySelector('.skeleton'), 4000, 'biblioteca');
+    ok('biblioteca com rascunhos e prontos', d.body.textContent.includes('Rascunho') && d.body.textContent.includes('Pronto'));
+    log.push('thumbs: '+all('.thumb').map(b=>b.className+'|'+b.textContent.slice(0,30)).join(' ; '));
+    const draft = all('.thumb').find((b) => b.textContent.includes('Rascunho'));
+    click(draft); await wait(200);
+    ok('rascunho reabre no storyboard', d.body.textContent.includes('Etapa 2 de 5'));
+    click(all('.tabbar button')[2]); await wait(300); await until(() => !d.querySelector('.skeleton'), 4000, 'biblioteca 2');
+    click(all('.thumb').find((b) => b.textContent.includes('Pronto'))); await until(() => d.querySelector('.overlay'), 2000, 'player');
+    click(btn('Editar cenas')); await wait(200);
+    ok('projeto pronto reabre para edição', d.body.textContent.includes('Etapa 5 de 5') && d.body.textContent.includes('Consistência média'));
+    // perfil
+    click(all('.tabbar button')[4]); await wait(200);
+    ok('perfil: versões v2 e consumo', d.body.textContent.includes('Versões dos projetos') && d.body.textContent.includes('v2') && /\d+ créditos usados/.test(d.body.textContent));
+    click(d.querySelector('.switch')); await wait(100);
+    click(all('.tabbar button')[1]); await wait(200);
+    click(all('.tl-item')[0]); await wait(200);
+    ok('painel Diagnóstico (modo dev)', !!d.querySelector('.diag') && d.querySelector('.diag').textContent.length > 20);
+  } catch (e) { log.push('FAIL EXCEÇÃO: ' + e.message + ' @ ' + (e.stack||'').split('\n')[1]); }
+  console.log(log.join('\n')); console.log('\nconsole errors/warns:', errors.length); errors.slice(0, 8).forEach((e) => console.log(e));
+  process.exit(0);
+})();

@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: dubbing
+labels: { owner: ia, team: ia }
+slos:
+  - name: success-rate
+    objective: 97
+    sliType: success_rate
+    description: "Taxa de sucesso de dublagem >= 97%."
+    sli: { events: { error_query: 'sum(rate(job_failures_total{queue="dubbing-video"}[{{.window}}]))', total_query: 'sum(rate(job_duration_ms_count{queue="dubbing-video"}[{{.window}}])) + sum(rate(job_failures_total{queue="dubbing-video"}[{{.window}}]))' } }
+  - name: latency
+    objective: 95
+    sliType: latency
+    description: "p95 < 10 min por job de dublagem (um job cobre todos os idiomas pedidos; limitação documentada)."
+    sli: { events: { error_query: 'sum(rate(job_duration_ms_count{queue="dubbing-video"}[{{.window}}])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[{{.window}}]))', total_query: 'sum(rate(job_duration_ms_count{queue="dubbing-video"}[{{.window}}]))' } }

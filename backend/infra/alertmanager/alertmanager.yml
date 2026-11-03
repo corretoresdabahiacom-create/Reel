@@ -1,0 +1,37 @@
+# Roteamento Alertmanager → PagerDuty (page) / Slack (ticket). Segredos via arquivos montados (não commitar).
+route:
+  receiver: slack-sre-tickets
+  group_by: [alertname, service, slo]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="page"]
+      receiver: pagerduty-primary
+      repeat_interval: 30m
+      continue: true
+    - matchers: [severity="page"]
+      receiver: slack-incidents
+    - matchers: [severity="ticket"]
+      receiver: slack-sre-tickets
+receivers:
+  - name: pagerduty-primary
+    pagerduty_configs:
+      - routing_key_file: /etc/alertmanager/secrets/pagerduty_routing_key
+        severity: critical
+        description: '{{ .CommonLabels.alertname }} — {{ .CommonAnnotations.summary }}'
+        details: { slo: '{{ .CommonLabels.slo }}', runbook: '{{ .CommonAnnotations.runbook }}' }
+  - name: slack-incidents
+    slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/slack_incidents_webhook
+        channel: '#incidents'
+        title: '{{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }} — runbook: {{ .CommonAnnotations.runbook }}'
+  - name: slack-sre-tickets
+    slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/slack_sre_webhook
+        channel: '#sre-tickets'
+inhibit_rules:
+  - source_matchers: [severity="page"]
+    target_matchers: [severity="ticket"]
+    equal: [slo, service]

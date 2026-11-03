@@ -1,0 +1,36 @@
+name: Frontend CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions: { contents: read }
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run -s api:types:check   # P0-1: tipos gerados batem com o snapshot do contrato do backend
+      - run: npm run typecheck
+      - run: npm run -s secrets:scan
+      - run: npm test
+      - run: node web/build.mjs
+      - run: npm run e2e
+  accessibility:
+    # Módulo 11: axe-core (WCAG 2.0/2.1/2.2 A e AA) em Chromium real + checagem de teclado. Falha com qualquer violação
+    # "critical" ou "serious", erro de página ou foco invisível.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: node web/build.mjs
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run a11y
+        env: { CI: "true" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: a11y-report, path: a11y-report.json }

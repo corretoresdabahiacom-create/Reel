@@ -1,0 +1,46 @@
+{
+  "name": "nexusreel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "server": "tsx server/index.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "web": "node web/serve.mjs",
+    "cap:sync": "npx cap sync",
+    "build:android": "cd android && ./gradlew bundleRelease",
+    "e2e": "node tests/e2e/run-all.cjs",
+    "a11y": "node tests/a11y/axe-audit.mjs --json a11y-report.json",
+    "secrets:scan": "node tools/secret-scan.mjs .",
+    "api:sync": "node tools/api-types.mjs sync",
+    "api:types": "node tools/api-types.mjs gen",
+    "api:types:check": "node tools/api-types.mjs check",
+    "test:live": "tsx --test tests/live/*.test.ts",
+    "api:bundle": "esbuild src/api/http.ts --bundle --format=iife --global-name=NexusApi --target=es2020 --outfile=web/nexus-api.js && esbuild src/api/firebase-auth.ts --bundle --minify --format=iife --global-name=NexusFirebase --target=es2020 --outfile=web/nexus-firebase.js",
+    "test:browser": "node tests/live/browser-session.mjs && node tests/live/browser-login.mjs && node tests/live/browser-create.mjs && node tests/live/browser-library.mjs && node tests/live/browser-delete.mjs",
+    "test:browser:h264": "NEXUS_BROWSER=electron NEXUS_REQUIRE_H264=1 xvfb-run -a sh -c \"node tests/live/browser-create.mjs && node tests/live/browser-library.mjs && node tests/live/browser-delete.mjs\""
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/ios": "^6.1.0",
+    "@capacitor/share": "^6.0.4",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "axe-core": "4.13.0",
+    "electron": "33.2.1",
+    "esbuild": "^0.28.2",
+    "express": "^4.19.2",
+    "jsdom": "^29.1.1",
+    "openapi-typescript": "7.13.0",
+    "playwright-core": "1.56.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "firebase": "12.19.0"
+  }
+}

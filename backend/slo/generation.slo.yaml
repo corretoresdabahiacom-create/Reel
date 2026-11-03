@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: generation
+labels: { owner: ia, team: ia }
+slos:
+  - name: success-rate
+    objective: 98
+    sliType: success_rate
+    description: "Taxa de sucesso de jobs de geração (storyboard, cena, montagem) >= 98%."
+    sli: { events: { error_query: 'sum(rate(job_failures_total{queue=~"generation-.*"}[{{.window}}]))', total_query: 'sum(rate(job_duration_ms_count{queue=~"generation-.*"}[{{.window}}])) + sum(rate(job_failures_total{queue=~"generation-.*"}[{{.window}}]))' } }
+  - name: scene-latency
+    objective: 95
+    sliType: latency
+    description: "p95 do tempo de geração por cena < 90 s."
+    sli: { events: { error_query: 'sum(rate(job_duration_ms_count{queue="generation-scene"}[{{.window}}])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[{{.window}}]))', total_query: 'sum(rate(job_duration_ms_count{queue="generation-scene"}[{{.window}}]))' } }

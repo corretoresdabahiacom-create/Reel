@@ -1,0 +1,15 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NexusReel - lista de espera</title>
+<meta name="description" content="Crie videos de ate 60s com texto e fotos e publique em TikTok, Shorts e Reels. Entre na lista de espera."><style>
+:root{--bg:#0b0b12;--fg:#f4f4f8;--mut:#9a9ab0;--acc:#7c5cff}@media(prefers-color-scheme:light){:root{--bg:#fff;--fg:#14141c;--mut:#5c5c70}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:16px}main{max-width:440px;width:100%}h1{font-size:2rem;margin:0 0 8px}p{color:var(--mut)}
+form{display:flex;gap:8px;margin:20px 0}input{flex:1;padding:12px;border-radius:10px;border:1px solid var(--mut);background:transparent;color:var(--fg);font:inherit}button{padding:12px 18px;border:0;border-radius:10px;background:var(--acc);color:#fff;font:inherit;cursor:pointer}#out{min-height:3em}</style></head>
+<body><main><h1>Seu video pronto em minutos</h1><p>Texto + fotos viram um video de ate 60s, publicado nas suas redes. Entre na lista e suba de posicao convidando amigos.</p>
+<form id="f"><input id="e" type="email" required autocomplete="email" placeholder="seu@email.com" aria-label="E-mail"><button>Entrar</button></form><div id="out" role="status" aria-live="polite"></div>
+<p style="font-size:.8rem">Usamos seu e-mail apenas para avisar do acesso (LGPD). Descadastre quando quiser.</p></main>
+<script>
+const API=(window.NEXUS_API||'')+'/api/v1';const q=new URLSearchParams(location.search);const utm={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(k=>{if(q.get(k))utm[k]=q.get(k).slice(0,100)});
+const ref=q.get('ref')||undefined;const out=document.getElementById('out');
+document.getElementById('f').addEventListener('submit',async ev=>{ev.preventDefault();out.textContent='Enviando...';
+try{const r=await fetch(API+'/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:document.getElementById('e').value,ref,utm:Object.keys(utm).length?utm:undefined})});const j=await r.json();
+if(r.ok||r.status===200){const link=j.shareLink||(location.origin+location.pathname+'?ref='+encodeURIComponent(j.referralCode||''));out.innerHTML='';const a=document.createElement('p');a.textContent='Voce esta na lista! Posicao: '+(j.position??'-')+'. Convide amigos: ';const l=document.createElement('a');l.href=link;l.textContent=link;a.append(l);out.append(a)}else out.textContent='Nao foi possivel entrar agora. Tente novamente.'}catch{out.textContent='Sem conexao. Tente novamente.'}});
+</script></body></html>

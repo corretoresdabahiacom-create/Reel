@@ -1,0 +1,718 @@
+{
+  "uid": "nx-slo-budget",
+  "title": "NexusReel — Error budget restante",
+  "tags": [
+    "nexusreel",
+    "sre",
+    "generated"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 32,
+      "title": "Error budget (30d) — api/availability",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"api\", sloth_slo=\"availability\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 33,
+      "title": "Error budget (30d) — api/latency-read",
+      "type": "gauge",
+      "gridPos": {
+        "x": 4.8,
+        "y": 0,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"api\", sloth_slo=\"latency-read\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 34,
+      "title": "Error budget (30d) — api/latency-write",
+      "type": "gauge",
+      "gridPos": {
+        "x": 9.6,
+        "y": 0,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"api\", sloth_slo=\"latency-write\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 35,
+      "title": "Error budget (30d) — auth/availability",
+      "type": "gauge",
+      "gridPos": {
+        "x": 14.399999999999999,
+        "y": 0,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"auth\", sloth_slo=\"availability\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 36,
+      "title": "Error budget (30d) — auth/latency",
+      "type": "gauge",
+      "gridPos": {
+        "x": 19.2,
+        "y": 0,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"auth\", sloth_slo=\"latency\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 37,
+      "title": "Error budget (30d) — cdn/availability",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"cdn\", sloth_slo=\"availability\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 38,
+      "title": "Error budget (30d) — cdn/thumbnail-latency",
+      "type": "gauge",
+      "gridPos": {
+        "x": 4.8,
+        "y": 5,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 39,
+      "title": "Error budget (30d) — dubbing/success-rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 9.6,
+        "y": 5,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 40,
+      "title": "Error budget (30d) — dubbing/latency",
+      "type": "gauge",
+      "gridPos": {
+        "x": 14.399999999999999,
+        "y": 5,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"dubbing\", sloth_slo=\"latency\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 41,
+      "title": "Error budget (30d) — generation/success-rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 19.2,
+        "y": 5,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"generation\", sloth_slo=\"success-rate\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 42,
+      "title": "Error budget (30d) — generation/scene-latency",
+      "type": "gauge",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"generation\", sloth_slo=\"scene-latency\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 43,
+      "title": "Error budget (30d) — publication/success-rate",
+      "type": "gauge",
+      "gridPos": {
+        "x": 4.8,
+        "y": 10,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"publication\", sloth_slo=\"success-rate\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 44,
+      "title": "Error budget (30d) — publication/latency",
+      "type": "gauge",
+      "gridPos": {
+        "x": 9.6,
+        "y": 10,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"publication\", sloth_slo=\"latency\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 45,
+      "title": "Error budget (30d) — queues/depth",
+      "type": "gauge",
+      "gridPos": {
+        "x": 14.399999999999999,
+        "y": 10,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"queues\", sloth_slo=\"depth\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 46,
+      "title": "Error budget (30d) — queues/dlq",
+      "type": "gauge",
+      "gridPos": {
+        "x": 19.2,
+        "y": 10,
+        "w": 4.8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_min(slo:period_error_budget_remaining:ratio{sloth_service=\"queues\", sloth_slo=\"dlq\"}, 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

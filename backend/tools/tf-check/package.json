@@ -1,0 +1,14 @@
+{
+  "name": "nexusreel-tf-check",
+  "private": true,
+  "description": "Valida o Terraform sem baixar providers: formatação (hclwrite, motor do tofu fmt) e esquema (gerado dos providers oficiais). Para ambientes sem acesso ao registry; o CI continua rodando tofu validate.",
+  "type": "module",
+  "scripts": { "check": "node fmt.mjs $(find ../../infra/terraform -name '*.tf') && node schema.mjs ../../infra/terraform" },
+  "devDependencies": {
+    "@cdktf/hcl-tools": "0.21.0",
+    "@cdktf/hcl2json": "0.20.11",
+    "@cdktf/provider-aws": "20.1.0",
+    "@cdktf/provider-random": "12.0.1",
+    "@cdktf/provider-tls": "11.0.1"
+  }
+}

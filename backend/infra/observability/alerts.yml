@@ -1,0 +1,47 @@
+# Alertas (docs/ALERTS.md descreve ação esperada de cada um). Severidade: page = acorda alguém; ticket = próximo dia útil.
+groups:
+  - name: nexusreel
+    rules:
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.02
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "Taxa de 5xx > 2% por 5 min", runbook: "docs/RUNBOOKS/rollback.md" }
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!="/r/:linkId"}[5m]))) > 1
+        for: 10m
+        labels: { severity: ticket }
+        annotations: { summary: "p95 da API > 1s por 10 min" }
+      - alert: RedirectLatencyP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route="/r/:linkId"}[5m]))) > 0.15
+        for: 5m
+        labels: { severity: page }
+        annotations: { summary: "Redirecionamento de afiliados p95 > 150ms" }
+      - alert: QueueBacklog
+        expr: queue_depth > 500
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: "Fila {{ $labels.queue }} com > 500 jobs por 10 min", runbook: "docs/RUNBOOKS/stuck-queue.md" }
+      - alert: DeadLetterQueueGrowing
+        expr: dlq_size > 0
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "DLQ {{ $labels.queue }} não está vazia", runbook: "docs/RUNBOOKS/stuck-queue.md" }
+      - alert: AIProviderFailures
+        expr: sum by (provider) (increase(ai_provider_failures_total[10m])) > 10
+        labels: { severity: page }
+        annotations: { summary: "Provedor de IA {{ $labels.provider }} falhando", runbook: "docs/RUNBOOKS/ai-provider-failure.md" }
+      - alert: PublicationFailureRate
+        expr: sum by (platform) (increase(publication_failure_total[30m])) / clamp_min(sum by (platform) (increase(publication_success_total[30m]) + increase(publication_failure_total[30m])), 1) > 0.3
+        for: 15m
+        labels: { severity: ticket }
+        annotations: { summary: "> 30% de falhas de publicação em {{ $labels.platform }}" }
+      - alert: AICostSpike
+        expr: sum(increase(ai_cost_cents_total[1h])) > 20000
+        labels: { severity: page }
+        annotations: { summary: "Custo de IA > R$200 na última hora", runbook: "docs/RUNBOOKS/cost-spike.md" }
+      - alert: ReadinessFailing
+        expr: up{job="nexus-api"} == 0
+        for: 2m
+        labels: { severity: page }
+        annotations: { summary: "API indisponível" }

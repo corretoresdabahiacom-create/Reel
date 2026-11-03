@@ -1,0 +1,104 @@
+name: CD
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback_to: { description: "Tag/SHA da imagem para rollback imediato (pula build)", required: false }
+permissions: { id-token: write, contents: read }
+concurrency: { group: cd, cancel-in-progress: false }
+env:
+  AWS_REGION: sa-east-1
+  ECR_REPO: nexusreel
+
+jobs:
+  # Instalação gratuita (padrão): sem AWS, o CD só garante que a imagem Docker gratuita compila (sem publicar em lugar nenhum).
+  # Os jobs da AWS (build → ECR, staging, smoke de storage, produção) só rodam com a variável do repositório AWS_ENABLED=true.
+  free-image:
+    if: ${{ vars.AWS_ENABLED != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with: { context: ., push: false, tags: "nexusreel:free-${{ github.sha }}", build-args: "APP_VERSION=${{ github.sha }}", cache-from: "type=gha", cache-to: "type=gha,mode=max" }
+      - run: docker compose -f docker-compose.free.yml --env-file infra/free/env.free.example config --quiet || echo "aviso — compose exige segredos (esperado sem .env.free)"
+
+  build:
+    if: ${{ vars.AWS_ENABLED == 'true' && !inputs.rollback_to }}
+    runs-on: ubuntu-latest
+    outputs: { image: "${{ steps.meta.outputs.image }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci && npx tsx scripts/gen-openapi.ts
+        env:
+          DATABASE_URL: postgres://x@localhost/x
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: build-secret-build-secret-build-secret-0
+          DATA_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ secrets.AWS_DEPLOY_ROLE_ARN }}", aws-region: "${{ env.AWS_REGION }}" }
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - id: meta
+        run: echo "image=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with: { context: ., push: true, tags: "${{ steps.meta.outputs.image }}", build-args: "APP_VERSION=${{ github.sha }}", cache-from: "type=gha", cache-to: "type=gha,mode=max", provenance: true, sbom: true }
+
+  staging:
+    needs: [build]
+    if: ${{ always() && vars.AWS_ENABLED == 'true' && (needs.build.result == 'success' || inputs.rollback_to) }}
+    runs-on: ubuntu-latest
+    environment: staging
+    env: { IMAGE: "${{ needs.build.outputs.image || format('{0}.dkr.ecr.sa-east-1.amazonaws.com/nexusreel:{1}', secrets.AWS_ACCOUNT_ID, inputs.rollback_to) }}", ENV_NAME: staging }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ secrets.AWS_DEPLOY_ROLE_ARN }}", aws-region: "${{ env.AWS_REGION }}" }
+      - name: Migrations (job único antes de subir as tasks)
+        run: infra/scripts/run-migrations.sh "nexusreel-${ENV_NAME}" "$IMAGE"
+      - name: Deploy API + workers (circuit breaker do ECS faz rollback automático)
+        run: infra/scripts/deploy-services.sh "nexusreel-${ENV_NAME}" "$IMAGE"
+      - name: Smoke staging
+        run: |
+          for i in $(seq 1 20); do curl -fsS "https://api.staging.nexusreel.app/readyz" && break || sleep 10; done
+          curl -fsS https://api.staging.nexusreel.app/api/v1/flags >/dev/null
+
+  # Storage na AWS real (P0-1 item 8): CloudFront exigindo assinatura, S3 recusando SigV4 adulterado, KMS nos objetos,
+  # tags/ciclo de vida e exclusão apagando do bucket. Produção só sai com isso verde.
+  staging-storage-smoke:
+    needs: [staging]
+    if: ${{ always() && vars.AWS_ENABLED == 'true' && needs.staging.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg && npm ci
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ secrets.AWS_DEPLOY_ROLE_ARN }}", aws-region: "${{ env.AWS_REGION }}" }
+      - name: Smoke de storage (S3 + CloudFront + KMS reais)
+        run: node tests/staging/aws-storage-smoke.mjs
+        env:
+          STAGING_API_URL: https://api.staging.nexusreel.app
+          STAGING_NAME: nexusreel-staging
+          STAGING_KMS_KEY_ARN: ${{ vars.STAGING_KMS_KEY_ARN }}
+
+  production:
+    needs: [build, staging, staging-storage-smoke] # auditoria: sem `build` em needs, needs.build.outputs.image vinha vazio e a imagem de produção ficava "nexusreel:"
+    if: ${{ always() && vars.AWS_ENABLED == 'true' && needs.staging.result == 'success' && needs.staging-storage-smoke.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production # exige aprovação manual (Environments → Required reviewers)
+    env: { IMAGE: "${{ needs.build.outputs.image || format('{0}.dkr.ecr.sa-east-1.amazonaws.com/nexusreel:{1}', secrets.AWS_ACCOUNT_ID, inputs.rollback_to) }}", ENV_NAME: production }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ secrets.AWS_DEPLOY_ROLE_ARN }}", aws-region: "${{ env.AWS_REGION }}" }
+      - name: Migrations (expand/contract — retrocompatíveis com a versão anterior)
+        run: infra/scripts/run-migrations.sh "nexusreel-${ENV_NAME}" "$IMAGE"
+      - name: Canary 10% → 50% → 100% (rollback automático se 5xx > 2% em 10 min)
+        run: infra/scripts/canary.sh "nexusreel-${ENV_NAME}" "$IMAGE"

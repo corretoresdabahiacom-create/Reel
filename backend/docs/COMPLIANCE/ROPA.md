@@ -1,0 +1,16 @@
+# ROPA — Registro das operações de tratamento (LGPD art. 37 / GDPR art. 30)
+
+> GERADO de `ACTIVITIES` em `src/modules/compliance/ropa.ts`. A tabela `compliance_ropa` é preenchida automaticamente (`POST /admin/ops/compliance/ropa/refresh`, job semanal) e cruzada com o `information_schema`: tabelas com dados pessoais fora de qualquer atividade aparecem como pendência. Revisão anual obrigatória.
+
+| Atividade | Tabelas | Finalidade / base legal | Destinatários | Retenção | Jurisdições | Responsável |
+|---|---|---|---|---|---|---|
+| Cadastro e autenticação | users, auth_identities, refresh_tokens, api_keys | Execução de contrato (LGPD art. 7 V / GDPR 6(1)(b)) — operar a conta | AWS (hospedagem) | Enquanto a conta existir + 30 dias de carência; tokens expiram em 30 dias | BR, EU, US-CA | backend |
+| Geração de vídeos por IA | projects, scenes, storyboards, generation_logs, ai_usage | Execução de contrato — gerar o vídeo solicitado; consentimento para uso de IA (type=ai) | Provedores de IA (vídeo/TTS/moderação), AWS S3 | Cenas brutas 90 d; vídeo final Free 365 d / Pro 730 d; logs 30 d | BR, EU, US-CA | ia |
+| Publicação em plataformas | publications, publication_jobs, connected_accounts | Execução de contrato — publicar a pedido do usuário (tokens OAuth cifrados) | TikTok, YouTube, Instagram, Shopee, Temu, OLX, Mercado Livre | Tokens até revogação; histórico enquanto o projeto existir | BR, EU, US-CA | backend |
+| Pagamentos, créditos e saques | transactions, payout_requests, kyc_verifications, sanctions_checks | Execução de contrato + obrigação legal (fiscal, PLD/AML) | Stripe, Provedor de KYC, Contador | 5 anos (obrigação fiscal), anonimizados — nunca apagados | BR, EU, US-CA | financeiro |
+| Marketplace e afiliados | templates, template_purchases, affiliate_accounts, affiliate_links, affiliate_conversions | Execução de contrato; legítimo interesse (antifraude de cliques) | Marketplaces parceiros | Cliques (IP em hash) 90 d; agregados mantidos | BR, EU | produto |
+| Analytics e experimentação (pseudonimizado) | analytics_events, experiment_assignments, attribution_touches, recommendation_events | Consentimento (cookies/analytics); legítimo interesse para métricas agregadas sem identificação | Data warehouse (somente pseudo_id) | Transacional 180 d; warehouse pseudonimizado, anonimizado após 24 meses | BR, EU, US-CA | dados |
+| Marketing e ciclo de vida | lifecycle_sends, notifications, waitlist_entries | Consentimento (type=marketing), revogável; opt-out por canal | Provedor de e-mail/push | 180 d (envios) / 90 d (notificações) | BR, EU, US-CA | growth |
+| Indicações e antifraude | referrals, device_fingerprints | Legítimo interesse (prevenção a fraude) — fingerprint em hash, 90 d | — | 90 d (fingerprints) | BR, EU | growth |
+| Direitos do titular e conformidade | consents, data_export_requests, deletion_requests, audit_logs | Obrigação legal (LGPD/GDPR) e prova de consentimento | — | Consentimentos e audit_logs 5 anos; exports 7 d | BR, EU, US-CA | dpo |
+| Operação e confiabilidade (incidentes) | incidents, incident_updates, status_subscribers | Legítimo interesse (segurança e continuidade); consentimento para assinantes da status page | Slack, PagerDuty | Incidentes 3 anos; assinantes até cancelar | BR, EU | sre |

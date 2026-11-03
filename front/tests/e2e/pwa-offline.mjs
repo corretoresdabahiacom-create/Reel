@@ -1,0 +1,17 @@
+import { chromium } from "/tmp/pwt/node_modules/playwright-core/index.mjs";
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] }).catch(async()=>chromium.launch({args:["--no-sandbox"]}));
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: "pt-BR" });
+const page = await ctx.newPage(); const errs = [];
+page.on("pageerror", e => errs.push(e.message));
+await page.goto("http://localhost:4173/", { waitUntil: "load" });
+await page.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller || true);
+await page.evaluate(() => navigator.serviceWorker.ready.then(() => 1));
+await page.reload(); await page.waitForTimeout(800);
+console.log("controlled:", await page.evaluate(() => !!navigator.serviceWorker.controller));
+console.log("manifest:", await page.evaluate(() => fetch("manifest.webmanifest").then(r => r.json()).then(j => j.name)));
+await ctx.setOffline(true);
+await page.reload({ waitUntil: "load" }); await page.waitForTimeout(1000);
+const txt = await page.evaluate(() => document.body.innerText.slice(0, 120).replace(/\n/g, " | "));
+console.log("offline render:", txt);
+console.log("errors:", errs.length, errs.slice(0,3));
+await b.close();

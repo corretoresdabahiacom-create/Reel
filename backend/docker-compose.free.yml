@@ -1,0 +1,108 @@
+# NexusReel — instalação GRATUITA em um servidor (sem AWS, sem nenhum serviço pago). Guia: docs/FREE.md
+#   1) cp infra/free/env.free.example .env.free   e preencha (segredos: `bash infra/free/gen-secrets.sh`)
+#   2) copie a pasta web/ do front para ./front (ou ajuste FRONT_DIR)
+#   3) docker compose -f docker-compose.free.yml --env-file .env.free build migrate && docker compose -f docker-compose.free.yml --env-file .env.free up -d
+# Caddy serve o front e a API no MESMO domínio (cookie de sessão SameSite=Strict) com HTTPS automático e gratuito.
+x-free-env: &free-env
+  NODE_ENV: production
+  APP_PROFILE: free
+  PAYMENTS_MODE: "off"
+  DATABASE_URL: postgres://nexus:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@postgres:5432/nexusreel
+  REDIS_URL: redis://redis:6379
+  STORAGE_DRIVER: local
+  LOCAL_STORAGE_DIR: /data/storage
+  KMS_DRIVER: local
+  PUBLIC_API_URL: https://${SITE_DOMAIN:?defina SITE_DOMAIN}
+  PUBLIC_APP_URL: https://${SITE_DOMAIN}
+  CORS_ORIGINS: https://${SITE_DOMAIN}
+  SESSION_COOKIE_SECURE: "true"
+  TRUSTED_PROXY: "true"
+  JWT_SECRET: ${JWT_SECRET:?gere com infra/free/gen-secrets.sh}
+  DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?}
+  IP_HASH_SALT: ${IP_HASH_SALT:?}
+  ANALYTICS_PSEUDO_SALT: ${ANALYTICS_PSEUDO_SALT:?}
+  AFFILIATE_WEBHOOK_SECRET: ${AFFILIATE_WEBHOOK_SECRET:?}
+  METRICS_TOKEN: ${METRICS_TOKEN:?}
+  DB_APP_ROLE: nexus_app
+  ADMIN_REQUIRE_TOTP: "true"
+  AI_VIDEO_PROVIDER: mock          # vídeo montado com FFmpeg a partir das fotos (IA de vídeo de verdade não existe grátis)
+  AI_TTS_PROVIDER: open            # melhor voz aberta instalada (Piper/Kokoro) ou a escolhida; sem modelo, espeak-ng
+  WAREHOUSE_EXPORT_DIR: /data/storage/.warehouse # pasta gravável (o usuário do contêiner não escreve em /app)
+  AI_MUSIC_PROVIDER: composer      # música original com instrumentos reais (FluidSynth + FluidR3_GM, MIT)
+  AI_TTS_FALLBACK: espeak
+  AI_STT_PROVIDER: whisper         # transcrição local (faster-whisper)
+  AI_MODERATION_PROVIDER: mock
+  PLATFORM_MODE: mock              # publicação nas redes fica simulada até haver apps aprovados
+  EMAIL_PROVIDER: log
+  FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+  C2PA_SIGNER: none
+  # movimento humano (opcional): Space aberto de imagem→vídeo; HF_TOKEN grátis aumenta a cota diária
+  EDGE_TTS: ${EDGE_TTS:-1}              # vozes neurais naturais (Edge, não oficial); se cair, usa Kokoro/Piper
+  HF_VIDEO_SPACE: ${HF_VIDEO_SPACE:-}
+  HF_VIDEO_API: ${HF_VIDEO_API:-}
+  HF_TOKEN: ${HF_TOKEN:-}
+  HF_TALK_SPACE: ${HF_TALK_SPACE:-}
+  # modelos abertos montados de ./models (baixe uma vez: python3 tools/models/baixar.py models)
+  PIPER_VOICES_DIR: /opt/models/piper
+  KOKORO_MODEL: /opt/models/kokoro/kokoro-v1.0.int8.onnx
+  KOKORO_VOICES: /opt/models/kokoro/voices-v1.0.bin
+  WHISPER_MODEL: /opt/models/whisper-base
+  LOG_LEVEL: info
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment: { POSTGRES_USER: nexus, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}", POSTGRES_DB: nexusreel }
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U nexus -d nexusreel"], interval: 5s, timeout: 3s, retries: 20 }
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes: [redisdata:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
+  migrate:
+    build:
+      context: .
+      args: { BUNDLE_MODELS: "0" } # modelos de voz montados de ./models (abaixo), fora da imagem
+    image: nexusreel-free:local # construída UMA vez (aqui); api e worker usam a mesma imagem — PC modesto não aguenta 3 builds em paralelo
+    # migra, liga o estúdio de voz e importa a biblioteca de música livre (CC0; idempotente — pula o que já existe)
+    command: ["sh", "-c", "node dist/db/migrate.js up && node dist/cli/flags.js on ff_voice_studio && node dist/cli/flags.js on ff_sections && (node dist/cli/import-music.js infra/free/music-cc0.json || echo AVISO: biblioteca CC0 não importada)"]
+    environment: *free-env
+    volumes: [storage:/data/storage]
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy } }
+    restart: "no"
+  api:
+    image: nexusreel-free:local
+    pull_policy: never
+    restart: unless-stopped
+    environment: *free-env
+    volumes: [storage:/data/storage, ./models:/opt/models:ro]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+  worker:
+    image: nexusreel-free:local
+    pull_policy: never
+    restart: unless-stopped
+    command: ["node", "--import", "./dist/instrumentation.js", "dist/worker.js"]
+    environment: *free-env
+    volumes: [storage:/data/storage, ./models:/opt/models:ro]
+    healthcheck: # o worker não tem porta HTTP: confere que o processo está vivo
+      test: ["CMD-SHELL", "grep -qa dist/worker.js /proc/[0-9]*/cmdline || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_healthy } }
+    stop_grace_period: 70s
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment: { SITE_DOMAIN: "${SITE_DOMAIN}" }
+    volumes:
+      - ./infra/free/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${FRONT_DIR:-./front}:/srv/front:ro
+      - ./infra/free/front-config:/srv/config:ro # bash infra/free/gen-front-config.sh .env.free
+      - caddydata:/data
+    depends_on: [api]
+volumes: { pgdata: {}, redisdata: {}, storage: {}, caddydata: {} }

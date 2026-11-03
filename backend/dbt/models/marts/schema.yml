@@ -1,0 +1,26 @@
+version: 2
+models:
+  - name: dim_users
+    columns:
+      - { name: pseudo_id, tests: [unique, not_null] }
+      - { name: signup_date, tests: [not_null] }
+  - name: mart_active_users_daily
+    columns:
+      - { name: activity_date, tests: [unique, not_null] }
+      - { name: dau, tests: [not_null] }
+  - name: mart_retention_cohorts
+    columns:
+      - { name: cohort_week, tests: [unique, not_null] }
+      - { name: cohort_size, tests: [not_null] }
+  - name: mart_funnel_cohort
+    columns: [{ name: cohort_week, tests: [unique, not_null] }]
+  - name: mart_ltv_cohorts
+    tests: [{ unique_combination: { columns: [cohort_month, day_offset] } }]
+  - name: mart_experiments
+    tests: [{ unique_combination: { columns: [experiment_key, variant] } }]
+  - name: mart_ops_daily
+    columns: [{ name: ops_date, tests: [unique, not_null] }]
+  - name: mart_monetization_daily
+    columns: [{ name: tx_date, tests: [unique, not_null] }]
+  - name: mart_attribution_channels
+    columns: [{ name: channel, tests: [unique, not_null] }]

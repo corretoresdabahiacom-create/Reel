@@ -1,0 +1,19 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    description: Export pseudonimizado do backend (events incremental; demais tabelas em snapshot). Contrato em warehouse/raw_ddl.sql.
+    loaded_at_field: _loaded_at
+    freshness:
+      warn_after: { count: "{{ var('freshness_warn_minutes') }}", period: minute }
+      error_after: { count: "{{ var('freshness_error_minutes') }}", period: minute }
+    tables:
+      - name: events
+      - name: users
+      - name: transactions
+      - name: projects
+      - name: publications
+      - name: ai_usage
+      - name: experiment_assignments
+      - name: referrals
+      - name: template_purchases

@@ -1,0 +1,24 @@
+{
+  "source": "FreePD.com (Kevin MacLeod e outros), espelho público https://a.ocv.me/pub/stuff/music/freepd/ — licença CC0 1.0 (domínio público). O FAQ do FreePD autoriza uso em 'um app que gera vídeos para usuários'. Crédito opcional.",
+  "license": "CC0-1.0",
+  "attribution": "FreePD.com (CC0)",
+  "base": "https://a.ocv.me/pub/stuff/music/freepd/",
+  "tracks": [
+    { "title": "City Sunshine", "mood": "upbeat", "genre": "pop", "path": "upbeat/City Sunshine.mp3" },
+    { "title": "Inspiration", "mood": "upbeat", "genre": "pop", "path": "upbeat/Inspiration.mp3" },
+    { "title": "Fresh Focus", "mood": "corporate", "genre": "corporate", "path": "upbeat/Fresh Focus.mp3" },
+    { "title": "From Page to Practice", "mood": "corporate", "genre": "corporate", "path": "upbeat/From Page to Practice.mp3" },
+    { "title": "Backbeat", "mood": "energetic", "genre": "electronic", "path": "electronic/Backbeat.mp3" },
+    { "title": "Funky Energy Loop", "mood": "energetic", "genre": "funk", "path": "scoring/Funky Energy Loop.mp3" },
+    { "title": "Study and Relax", "mood": "calm", "genre": "ambient", "path": "chill/Study and Relax.mp3" },
+    { "title": "Infinite Peace", "mood": "calm", "genre": "ambient", "path": "chill/Infinite Peace.mp3" },
+    { "title": "Lovely Piano Song", "mood": "emotional", "genre": "piano", "path": "romantic/Lovely Piano Song.mp3" },
+    { "title": "Nostalgic Piano", "mood": "emotional", "genre": "piano", "path": "romantic/Nostalgic Piano.mp3" },
+    { "title": "Happy Whistling Ukulele", "mood": "fun", "genre": "acoustic", "path": "upbeat/Happy Whistling Ukulele.mp3" },
+    { "title": "Funshine", "mood": "fun", "genre": "pop", "path": "upbeat/Funshine.mp3" },
+    { "title": "Downtown Boogie", "mood": "lofi", "genre": "chill", "path": "chill/Downtown Boogie.mp3" },
+    { "title": "Martini Sunset", "mood": "lofi", "genre": "jazz", "path": "jazz/Martini Sunset.mp3" },
+    { "title": "Adventure", "mood": "epic", "genre": "orchestral", "path": "epic/Adventure.mp3" },
+    { "title": "Epic Blockbuster 2", "mood": "epic", "genre": "orchestral", "path": "epic/Epic Blockbuster 2.mp3" }
+  ]
+}

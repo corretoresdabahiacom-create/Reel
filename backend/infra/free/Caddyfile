@@ -1,0 +1,41 @@
+# Front (estático) e API no mesmo domínio, HTTPS automático e gratuito (Let's Encrypt). SITE_DOMAIN vem do .env.free.
+(nexusreel) {
+	encode zstd gzip
+	handle /api/* {
+		reverse_proxy api:8787
+	}
+	# config gerada por gen-front-config.sh; sem ela, vale o nexus-config.js padrão do front (modo demonstração)
+	@cfg {
+		path /nexus-config.js
+		file {
+			root /srv/config
+			try_files {path}
+		}
+	}
+	handle @cfg {
+		root * /srv/config
+		header Cache-Control no-cache
+		file_server
+	}
+	handle {
+		root * /srv/front
+		try_files {path} /index.html
+		file_server
+	}
+	# "?" = só quando a resposta ainda não tem o cabeçalho (a API já manda os dela; evita cabeçalho duplicado)
+	header {
+		?Strict-Transport-Security "max-age=31536000"
+		?X-Content-Type-Options nosniff
+		?Referrer-Policy strict-origin-when-cross-origin
+	}
+}
+
+{$SITE_DOMAIN} {
+	import nexusreel
+}
+
+# Só para o link temporário de teste (docker-compose.tunnel.yml): o túnel entra por aqui, dentro da rede do Docker,
+# e o HTTPS público é o do próprio túnel. A porta 8080 NÃO é publicada no computador.
+:8080 {
+	import nexusreel
+}

@@ -1,0 +1,22 @@
+version: 2
+models:
+  - name: stg_events
+    columns:
+      - { name: event_id, tests: [unique, not_null] }
+      - { name: event_name, tests: [not_null] }
+      - { name: occurred_at, tests: [not_null] }
+  - name: stg_users
+    columns:
+      - { name: pseudo_id, tests: [unique, not_null] }
+      - { name: plan, tests: [{ accepted_values: { values: [free, pro, business] } }] }
+  - name: stg_transactions
+    columns:
+      - { name: tx_id, tests: [unique, not_null] }
+  - name: stg_projects
+    columns: [{ name: project_id, tests: [unique, not_null] }]
+  - name: stg_publications
+    columns: [{ name: publication_id, tests: [unique, not_null] }]
+  - name: stg_ai_usage
+    columns: [{ name: usage_id, tests: [unique, not_null] }]
+  - name: stg_referrals
+    columns: [{ name: referral_id, tests: [unique, not_null] }]

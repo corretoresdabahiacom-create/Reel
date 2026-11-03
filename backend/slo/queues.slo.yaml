@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: queues
+labels: { owner: infra, team: infra }
+slos:
+  - name: depth
+    objective: 99
+    sliType: saturation
+    description: "queue_depth < 500 em horário de pico (fração do tempo em conformidade)."
+    sli: { events: { error_query: 'count(max_over_time(queue_depth[{{.window}}]) > 500) or vector(0)', total_query: 'count(max_over_time(queue_depth[{{.window}}]))' } }
+  - name: dlq
+    objective: 99
+    sliType: saturation
+    description: "DLQ < 50 itens por fila."
+    sli: { events: { error_query: 'count(max_over_time(dlq_size[{{.window}}]) >= 50) or vector(0)', total_query: 'count(max_over_time(dlq_size[{{.window}}]))' } }

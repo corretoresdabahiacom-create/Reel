@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "features": [
+    "days_since_last_login",
+    "tenure_days",
+    "projects_7d",
+    "projects_30d",
+    "gen_success_rate_30d",
+    "publications_7d",
+    "publications_30d",
+    "platforms_connected",
+    "credits_remaining",
+    "plan_ordinal",
+    "marketplace_purchases_90d",
+    "affiliate_links_active",
+    "onboarding_completed",
+    "revenue_90d_brl"
+  ],
+  "note": "Mesma ordem de src/modules/retention/features.ts (FEATURES). Um teste de paridade falha se divergirem."
+}

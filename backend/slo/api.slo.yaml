@@ -1,0 +1,19 @@
+version: "prometheus/v1"
+service: api
+labels: { owner: backend, team: backend }
+slos:
+  - name: availability
+    objective: 99.9
+    sliType: availability
+    description: "Disponibilidade da API (respostas não-5xx), janela de 30 dias. Orçamento de erro 0,1%/mês."
+    sli: { events: { error_query: 'sum(rate(http_requests_total{status=~"5.."}[{{.window}}]))', total_query: 'sum(rate(http_requests_total[{{.window}}]))' } }
+  - name: latency-read
+    objective: 95
+    sliType: latency
+    description: "p95 < 300 ms nas leituras (GET): 95% das requisições abaixo de 300 ms."
+    sli: { events: { error_query: 'sum(rate(http_request_duration_seconds_count{method="GET"}[{{.window}}])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[{{.window}}]))', total_query: 'sum(rate(http_request_duration_seconds_count{method="GET"}[{{.window}}]))' } }
+  - name: latency-write
+    objective: 95
+    sliType: latency
+    description: "p95 < 1 s nas escritas (POST/PUT/PATCH/DELETE)."
+    sli: { events: { error_query: 'sum(rate(http_request_duration_seconds_count{method!="GET"}[{{.window}}])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[{{.window}}]))', total_query: 'sum(rate(http_request_duration_seconds_count{method!="GET"}[{{.window}}]))' } }

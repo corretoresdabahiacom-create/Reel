@@ -1,0 +1,68 @@
+# Experimentos de caos NexusReel — hipótese, escopo e critério de aborto em docs/SRE/CHAOS.md
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata: { name: worker-kill-monthly, labels: { hypothesis: queue-recovery } }
+spec:
+  schedule: "0 14 15 * *"          # dia 15, 14h UTC (horário comercial BR)
+  type: PodChaos
+  historyLimit: 6
+  concurrencyPolicy: Forbid
+  suspend: true
+  podChaos:
+    action: pod-kill
+    mode: fixed-percent
+    value: "50"
+    selector: { namespaces: [nexusreel-staging], labelSelectors: { app: nexusreel-worker } }
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: { name: ai-provider-latency, labels: { hypothesis: circuit-breaker-fallback } }
+spec:
+  action: delay
+  mode: all
+  selector: { namespaces: [nexusreel-staging], labelSelectors: { app: nexusreel-worker } }
+  direction: to
+  externalTargets: ["api.klingai.com"]
+  delay: { latency: "8s", jitter: "2s" }
+  duration: "10m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: { name: redis-partition, labels: { hypothesis: degraded-mode-rate-limit } }
+spec:
+  action: partition
+  mode: all
+  selector: { namespaces: [nexusreel-staging], labelSelectors: { app: nexusreel-api } }
+  direction: to
+  target: { mode: all, selector: { namespaces: [nexusreel-staging], labelSelectors: { app: redis } } }
+  duration: "3m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: { name: platform-5xx-simulation, labels: { hypothesis: publication-retry-and-breaker } }
+spec:
+  action: loss
+  mode: all
+  selector: { namespaces: [nexusreel-staging], labelSelectors: { app: nexusreel-worker } }
+  direction: to
+  externalTargets: ["open.tiktokapis.com", "graph.facebook.com"]
+  loss: { loss: "60", correlation: "25" }
+  duration: "10m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata: { name: api-cpu-pressure, labels: { hypothesis: autoscaling-holds-p95 } }
+spec:
+  mode: fixed-percent
+  value: "50"
+  selector: { namespaces: [nexusreel-staging], labelSelectors: { app: nexusreel-api } }
+  stressors: { cpu: { workers: 2, load: 80 } }
+  duration: "10m"
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: { name: postgres-failover, labels: { hypothesis: rto-1h-rpo-5min } }
+spec:
+  action: pod-kill
+  mode: one
+  selector: { namespaces: [nexusreel-staging], labelSelectors: { app: postgres, role: primary } }

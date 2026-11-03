@@ -1,0 +1,16 @@
+import type { SloSpec } from '../../src/modules/sre/spec.js';
+let pid = 0; const base = (title: string, type: string, x: number, y: number, w: number, h: number, targets: Array<{ expr: string; legendFormat?: string }>, extra: Record<string, unknown> = {}) => ({ id: ++pid, title, type, gridPos: { x, y, w, h }, datasource: { type: 'prometheus', uid: '${DS_PROMETHEUS}' }, targets: targets.map((t, i) => ({ refId: String.fromCharCode(65 + i), ...t })), ...extra });
+const dash = (uid: string, title: string, panels: unknown[]) => ({ uid, title, tags: ['nexusreel', 'sre', 'generated'], schemaVersion: 39, version: 1, timezone: 'browser', refresh: '1m', time: { from: 'now-7d', to: 'now' }, templating: { list: [{ name: 'DS_PROMETHEUS', type: 'datasource', query: 'prometheus' }] }, panels });
+/** Gera os dashboards SRE a partir das specs (Grafana JSON, versionados no repo): visão geral, burn rate (1h/6h/3d) e error budget. */
+export function buildDashboards(specs: SloSpec[]): Record<string, unknown> {
+  pid = 0; const all = specs.flatMap((s) => s.slos.map((x) => ({ service: s.service, name: x.name, objective: x.objective })));
+  const sel = (a: { service: string; name: string }) => `sloth_service="${a.service}", sloth_slo="${a.name}"`;
+  const overview = all.map((a, i) => base(`${a.service}/${a.name} — budget restante (alvo ${a.objective}%)`, 'stat', (i % 4) * 6, Math.floor(i / 4) * 4, 6, 4, [{ expr: `slo:period_error_budget_remaining:ratio{${sel(a)}}` }], { fieldConfig: { defaults: { unit: 'percentunit', min: -1, max: 1, thresholds: { mode: 'absolute', steps: [{ color: 'red', value: null }, { color: 'orange', value: 0.25 }, { color: 'green', value: 0.5 }] } }, overrides: [] } }));
+  overview.push(base('Alertas de burn rate disparando', 'table', 0, Math.ceil(all.length / 4) * 4, 24, 8, [{ expr: 'ALERTS{alertstate="firing", alertname=~"SLOBurnRate.*"}' }]));
+  const burn = all.map((a, i) => base(`Burn rate — ${a.service}/${a.name}`, 'timeseries', (i % 2) * 12, Math.floor(i / 2) * 7, 12, 7, [
+    { expr: `slo:sli_error:ratio_rate1h{${sel(a)}} / slo:error_budget:ratio{${sel(a)}}`, legendFormat: '1h (page > 14,4)' },
+    { expr: `slo:sli_error:ratio_rate6h{${sel(a)}} / slo:error_budget:ratio{${sel(a)}}`, legendFormat: '6h (page > 6)' },
+    { expr: `slo:sli_error:ratio_rate3d{${sel(a)}} / slo:error_budget:ratio{${sel(a)}}`, legendFormat: '3d (ticket > 1)' }], { fieldConfig: { defaults: { unit: 'none', custom: { thresholdsStyle: { mode: 'line' } }, thresholds: { mode: 'absolute', steps: [{ color: 'green', value: null }, { color: 'red', value: 14.4 }] } }, overrides: [] } }));
+  const budget = all.map((a, i) => base(`Error budget (30d) — ${a.service}/${a.name}`, 'gauge', (i % 5) * 4.8, Math.floor(i / 5) * 5, 4.8, 5, [{ expr: `clamp_min(slo:period_error_budget_remaining:ratio{${sel(a)}}, 0)` }], { fieldConfig: { defaults: { unit: 'percentunit', min: 0, max: 1, thresholds: { mode: 'absolute', steps: [{ color: 'red', value: null }, { color: 'orange', value: 0.25 }, { color: 'green', value: 0.5 }] } }, overrides: [] } }));
+  return { 'slo-overview.json': dash('nx-slo-overview', 'NexusReel — SLOs (visão geral)', overview), 'slo-burn-rate.json': dash('nx-slo-burn', 'NexusReel — Burn rate (1h / 6h / 3d)', burn), 'error-budget.json': dash('nx-slo-budget', 'NexusReel — Error budget restante', budget) };
+}

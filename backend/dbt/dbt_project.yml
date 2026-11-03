@@ -1,0 +1,29 @@
+name: nexusreel
+version: '1.0.0'
+config-version: 2
+profile: nexusreel
+model-paths: [models]
+macro-paths: [macros]
+seed-paths: [seeds]
+test-paths: [tests]
+target-path: target
+clean-targets: [target, dbt_packages]
+
+vars:
+  # Data de referência para maturidade de coortes (D1/D7/D30/D90 só são calculados quando a coorte já "viveu" N dias).
+  # Padrão: último evento carregado. Fixe em testes/backfills: --vars '{as_of_date: "2026-04-30"}'
+  as_of_date: null
+  # Eventos que contam como "usuário ativo" (ação de criação/distribuição — exclui eventos passivos como paywall_viewed).
+  activity_events: [project_created, storyboard_generated, scene_generated, video_assembled, video_published, template_used, video_dubbed]
+  freshness_warn_minutes: 60
+  freshness_error_minutes: 180
+
+models:
+  nexusreel:
+    staging: { +materialized: view, +schema: staging }
+    intermediate: { +materialized: view, +schema: staging }
+    marts: { +materialized: table, +schema: marts }
+    semantic: { +materialized: table, +schema: semantic }
+seeds:
+  nexusreel:
+    +schema: semantic

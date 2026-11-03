@@ -1,0 +1,17 @@
+metric_key,label,unit,owner,description,source_model
+dau,Usu?rios ativos por dia,users,produto,Usu?rios distintos com a??o de cria??o/distribui??o no dia,mart_active_users_daily
+wau,Usu?rios ativos 7 dias,users,produto,Janela m?vel de 7 dias,mart_active_users_daily
+mau,Usu?rios ativos 30 dias,users,produto,Janela m?vel de 30 dias,mart_active_users_daily
+new_users,Novos cadastros,users,growth,Contas criadas no dia (dimens?o opcional: canal),dim_users
+revenue_brl_cents,Receita (BRL centavos),brl_cents,financeiro,Assinaturas + cr?ditos normalizados para BRL (dimens?es: moeda e m?todo),fct_revenue_daily
+paying_users,Usu?rios pagantes no dia,users,monetizacao,Usu?rios distintos com transa??o de receita,mart_monetization_daily
+new_payers,Novos pagantes,users,monetizacao,Primeira transa??o de receita do usu?rio,mart_monetization_daily
+videos_assembled,V?deos montados (eventos),videos,produto,Evento video_assembled (usu?rios com analytics consentido),mart_funnel_daily
+videos_ready,V?deos prontos,videos,produto,Projetos com status ready criados no dia,mart_ops_daily
+publications_published,Publica??es conclu?das,publications,produto,Publica??es com status published,mart_ops_daily
+publish_success_rate,Taxa de sucesso de publica??o,ratio,operacoes,published / (published + failed),mart_ops_daily
+ai_cost_cents,Custo de IA (centavos),cents,operacoes,Soma de ai_usage.cost_cents,mart_ops_daily
+ai_cost_per_ready_video_cents,Custo de IA por v?deo pronto,cents,operacoes,Custo di?rio de IA / v?deos prontos do dia,mart_ops_daily
+marketplace_gmv_credits,GMV do marketplace (cr?ditos),credits,marketplace,Soma de price_credits das compras de templates,mart_marketplace_daily
+marketplace_fee_credits,Receita de taxa do marketplace (cr?ditos),credits,marketplace,Soma de fee_credits,mart_marketplace_daily
+referrals_rewarded,Indica??es recompensadas,referrals,growth,Indica??es ativadas e pagas,mart_referrals_daily

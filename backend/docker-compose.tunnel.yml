@@ -1,0 +1,19 @@
+# Link HTTPS público e TEMPORÁRIO para testar no celular (Cloudflare Quick Tunnel: grátis, sem conta).
+# Uso (docs/FREE.md, "Testar no celular"):
+#   1) docker compose -f docker-compose.free.yml -f docker-compose.tunnel.yml --env-file .env.free up -d tunnel
+#   2) pegue o endereço https://….trycloudflare.com no log: docker compose ... logs tunnel
+#   3) TUNNEL_URL=<endereço> no .env.free e: docker compose -f docker-compose.free.yml -f docker-compose.tunnel.yml --env-file .env.free up -d api worker
+#   4) terminou o teste: docker compose -f docker-compose.free.yml -f docker-compose.tunnel.yml --env-file .env.free stop tunnel  (o link deixa de existir)
+services:
+  tunnel:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2025.8.1}
+    command: ["tunnel", "--no-autoupdate", "--url", "http://caddy:8080"]
+    depends_on: [caddy]
+    restart: "no"
+  api:
+    environment: &tunnel-env
+      PUBLIC_API_URL: ${TUNNEL_URL:-https://${SITE_DOMAIN}}
+      PUBLIC_APP_URL: ${TUNNEL_URL:-https://${SITE_DOMAIN}}
+      CORS_ORIGINS: ${TUNNEL_URL:-https://${SITE_DOMAIN}}
+  worker:
+    environment: *tunnel-env

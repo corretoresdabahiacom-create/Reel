@@ -1,0 +1,9 @@
+# Catalogo de dashboards. Cada .sql contem cards separados por comentarios "-- card: <id> | <descricao>".
+# Todos leem SOMENTE das camadas marts/semantic do dbt (nunca de raw). Renderizacao: Metabase/Looker (importar o SQL) ou /admin/growth.
+dashboards:
+  executivo:    { file: executivo.sql,    audience: diretoria,   refresh: diario }
+  growth:       { file: growth.sql,       audience: growth,      refresh: diario }
+  produto:      { file: produto.sql,      audience: produto,     refresh: diario }
+  monetizacao:  { file: monetizacao.sql,  audience: financeiro,  refresh: diario }
+  marketplace:  { file: marketplace.sql,  audience: marketplace, refresh: diario }
+  operacoes:    { file: operacoes.sql,    audience: sre/ops,     refresh: horario }

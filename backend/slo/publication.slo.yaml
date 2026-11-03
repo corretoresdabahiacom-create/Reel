@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: publication
+labels: { owner: backend, team: backend }
+slos:
+  - name: success-rate
+    objective: 97
+    sliType: success_rate
+    description: "Taxa de sucesso de publicação >= 97% (por plataforma: filtrar por label platform nos dashboards)."
+    sli: { events: { error_query: 'sum(rate(publication_failure_total[{{.window}}]))', total_query: 'sum(rate(publication_success_total[{{.window}}])) + sum(rate(publication_failure_total[{{.window}}]))' } }
+  - name: latency
+    objective: 95
+    sliType: latency
+    description: "p95 do tempo de publicação < 5 min."
+    sli: { events: { error_query: 'sum(rate(job_duration_ms_count{queue=~"publication-.*"}[{{.window}}])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[{{.window}}]))', total_query: 'sum(rate(job_duration_ms_count{queue=~"publication-.*"}[{{.window}}]))' } }

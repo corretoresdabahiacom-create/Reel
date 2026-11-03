@@ -1,0 +1,16 @@
+node_modules
+coverage/
+.storage/
+dist/
+*.log
+.env
+.warehouse/
+dbt/target/
+dbt/logs/
+.openapi-record/
+infra/free/front-config/
+.env.free
+
+# modelos abertos baixados (grandes): só o README vai para o Git
+models/*
+!models/README.md

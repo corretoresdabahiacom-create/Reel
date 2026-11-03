@@ -1,0 +1,15 @@
+{
+  "_comment": "Exceções registradas e revisadas. Cada pacote precisa de justificativa; revisão trimestral junto à auditoria de acessos.",
+  "reviewedAt": "2026-10-21",
+  "reviewer": "pendente (Engenharia + Jurídico)",
+  "packages": [
+    "@msgpackr-extract/msgpackr-extract-darwin-arm64",
+    "@msgpackr-extract/msgpackr-extract-darwin-x64",
+    "@msgpackr-extract/msgpackr-extract-linux-arm",
+    "@msgpackr-extract/msgpackr-extract-linux-arm64",
+    "@msgpackr-extract/msgpackr-extract-win32-x64",
+    "@contentauth/c2pa-types",
+    "buffers"
+  ],
+  "justification": "Binários opcionais por plataforma do msgpackr-extract (dependência do BullMQ), não instalados neste ambiente (campo license ilegível localmente). O pacote-pai msgpackr-extract declara MIT — CONFIRMAR no registro npm antes da auditoria externa. | Módulo 10: @contentauth/c2pa-types (tipos do SDK C2PA oficial) não declara 'license' no package.json, mas traz LICENSE MIT (© Adobe) no pacote — verificado localmente. buffers@0.1.1 (dependência de unzipper → c2pa-node) não declara licença no pacote; o repositório de origem (substack/node-buffers) publica MIT/X11 — NÃO VERIFICÁVEL aqui (sem rede ao GitHub); é usado só no postinstall do c2pa-node (baixar o binário nativo), nunca em tempo de execução. CONFIRMAR antes da auditoria externa."
+}

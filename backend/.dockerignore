@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.git
+.github
+.env
+.storage
+tests
+infra
+!infra/free/music-cc0.json
+models/*
+!models/README.md
+docs/*.md
+*.log
+front

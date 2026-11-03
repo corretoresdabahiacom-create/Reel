@@ -1,0 +1,5 @@
+bucket         = "nexusreel-tfstate"
+key            = "production/terraform.tfstate"
+region         = "sa-east-1"
+dynamodb_table = "nexusreel-tflock"
+encrypt        = true

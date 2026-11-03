@@ -1,0 +1,143 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions: { contents: read, security-events: write }
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Varredura de segredos (arquivos versionados)
+        run: npm run -s secrets:scan
+      - run: npm run lint
+      - name: OpenAPI × rotas reais
+        run: npm run openapi:check
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+          DATA_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - name: Fase 8 — artefatos gerados e governança como código
+        run: |
+          npm run slo:check
+          npm run taxonomy:check
+          npm run rls:check
+          npm run compliance:docs:check
+          npx tsx tools/i18n-check/docs.ts --check
+          npm run i18n:check
+          npm run onboarding:validate
+          npm run audit:licenses
+          npm run dataroom:check
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+          DATA_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: nexus_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm ci
+      - name: Vitest + cobertura (limiares em vitest.config.ts)
+        run: npx vitest run --coverage
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_test
+          TEST_REDIS_URL: redis://localhost:6379
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage, path: coverage }
+
+  migrations:
+    # Migrations reversíveis: up → down (todas) → up, e dry-run.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: nexus_test }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 20
+    env: { DATABASE_URL: "postgres://postgres:postgres@localhost:5432/nexus_test" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsx src/db/migrate.ts up
+      - run: for i in 1 2 3; do npx tsx src/db/migrate.ts down; done
+      - run: npx tsx src/db/migrate.ts up && npx tsx src/db/migrate.ts status
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [quality]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: npm ci && npx tsx scripts/gen-openapi.ts
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/nexus_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
+          DATA_ENCRYPTION_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - uses: docker/build-push-action@v6
+        with: { context: ., load: true, tags: "nexusreel:ci", cache-from: "type=gha", cache-to: "type=gha,mode=max" }
+      - name: Trivy (imagem) — falha em HIGH/CRITICAL corrigíveis
+        uses: aquasecurity/trivy-action@0.24.0
+        with: { image-ref: "nexusreel:ci", severity: "HIGH,CRITICAL", ignore-unfixed: true, exit-code: "1", format: table }
+      - name: Trivy (dependências + IaC + segredos)
+        uses: aquasecurity/trivy-action@0.24.0
+        with: { scan-type: fs, scan-ref: ., scanners: "vuln,secret,misconfig", severity: "HIGH,CRITICAL", ignore-unfixed: true, exit-code: "1" }
+
+  e2e-stack:
+    # Sobe o docker-compose completo, roda smoke + ZAP baseline contra a API real.
+    runs-on: ubuntu-latest
+    needs: [docker]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build --wait api worker
+      - name: Smoke
+        run: |
+          curl -fsS localhost:8787/readyz
+          curl -fsS localhost:8787/api/v1/flags
+          curl -fsS -H "authorization: Bearer dev-metrics-token" localhost:8787/metrics | grep -q http_requests_total
+      - name: OWASP ZAP baseline
+        uses: zaproxy/action-baseline@v0.12.0
+        with: { target: "http://localhost:8787/api/v1/billing/catalog", fail_action: false, allow_issue_writing: false, cmd_options: "-a" }
+      - if: failure()
+        run: docker compose logs --no-color | tail -200
+      - run: docker compose down -v
+
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+      - run: tofu fmt -check -recursive infra/terraform
+      - name: validate (staging)
+        working-directory: infra/terraform/envs/staging
+        run: tofu init -backend=false -input=false && tofu validate
+      - uses: aquasecurity/trivy-action@0.24.0
+        with: { scan-type: config, scan-ref: infra/terraform, severity: "HIGH,CRITICAL", exit-code: "0" }

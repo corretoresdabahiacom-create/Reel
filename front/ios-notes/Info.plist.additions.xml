@@ -1,0 +1,7 @@
+<!-- Adicionar ao ios/App/App/Info.plist após `npx cap add ios` (requer macOS + Xcode). -->
+<key>NSCameraUsageDescription</key><string>Usamos a câmera para você tirar as fotos sugeridas pela PhotoCoach.</string>
+<key>NSPhotoLibraryUsageDescription</key><string>Escolha fotos da sua galeria para criar vídeos.</string>
+<key>NSPhotoLibraryAddUsageDescription</key><string>Salvar o vídeo final na sua galeria.</string>
+<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLSchemes</key><array><string>nexusreel</string></array></dict></array>
+<key>UIViewControllerBasedStatusBarAppearance</key><true/>
+<!-- Universal Links: Associated Domains = applinks:app.nexusreel.com ; publicar /.well-known/apple-app-site-association -->

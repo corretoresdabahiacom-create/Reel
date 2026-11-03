@@ -1,0 +1,13 @@
+version: 2
+models:
+  - name: sem_metrics_daily
+    description: M?tricas di?rias em formato longo; toda metric_key precisa existir no cat?logo.
+    columns:
+      - { name: metric_date, tests: [not_null] }
+      - { name: metric_key, tests: [not_null, { relationships: { to: ref('metric_catalog'), field: metric_key } }] }
+      - { name: value }
+seeds:
+  - name: metric_catalog
+    columns:
+      - { name: metric_key, tests: [unique, not_null] }
+      - { name: owner, tests: [{ accepted_values: { values: [produto, growth, financeiro, monetizacao, operacoes, marketplace] } }] }

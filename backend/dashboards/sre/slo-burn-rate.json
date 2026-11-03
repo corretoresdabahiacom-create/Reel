@@ -1,0 +1,868 @@
+{
+  "uid": "nx-slo-burn",
+  "title": "NexusReel — Burn rate (1h / 6h / 3d)",
+  "tags": [
+    "nexusreel",
+    "sre",
+    "generated"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 17,
+      "title": "Burn rate — api/availability",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"api\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"availability\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"api\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"availability\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"api\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"availability\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "title": "Burn rate — api/latency-read",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"api\", sloth_slo=\"latency-read\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-read\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"api\", sloth_slo=\"latency-read\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-read\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"api\", sloth_slo=\"latency-read\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-read\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "title": "Burn rate — api/latency-write",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"api\", sloth_slo=\"latency-write\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-write\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"api\", sloth_slo=\"latency-write\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-write\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"api\", sloth_slo=\"latency-write\"} / slo:error_budget:ratio{sloth_service=\"api\", sloth_slo=\"latency-write\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "title": "Burn rate — auth/availability",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"auth\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"availability\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"auth\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"availability\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"auth\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"availability\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 21,
+      "title": "Burn rate — auth/latency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"auth\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"latency\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"auth\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"latency\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"auth\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"auth\", sloth_slo=\"latency\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "title": "Burn rate — cdn/availability",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 14,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"cdn\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"availability\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"cdn\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"availability\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"cdn\", sloth_slo=\"availability\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"availability\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "title": "Burn rate — cdn/thumbnail-latency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"} / slo:error_budget:ratio{sloth_service=\"cdn\", sloth_slo=\"thumbnail-latency\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "title": "Burn rate — dubbing/success-rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 21,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 25,
+      "title": "Burn rate — dubbing/latency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"dubbing\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"latency\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"dubbing\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"latency\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"dubbing\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"dubbing\", sloth_slo=\"latency\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 26,
+      "title": "Burn rate — generation/success-rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"generation\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"generation\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"generation\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 27,
+      "title": "Burn rate — generation/scene-latency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"generation\", sloth_slo=\"scene-latency\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"scene-latency\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"generation\", sloth_slo=\"scene-latency\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"scene-latency\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"generation\", sloth_slo=\"scene-latency\"} / slo:error_budget:ratio{sloth_service=\"generation\", sloth_slo=\"scene-latency\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 28,
+      "title": "Burn rate — publication/success-rate",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"publication\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"publication\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"publication\", sloth_slo=\"success-rate\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"success-rate\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 29,
+      "title": "Burn rate — publication/latency",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"publication\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"latency\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"publication\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"latency\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"publication\", sloth_slo=\"latency\"} / slo:error_budget:ratio{sloth_service=\"publication\", sloth_slo=\"latency\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 30,
+      "title": "Burn rate — queues/depth",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"queues\", sloth_slo=\"depth\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"depth\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"queues\", sloth_slo=\"depth\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"depth\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"queues\", sloth_slo=\"depth\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"depth\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 31,
+      "title": "Burn rate — queues/dlq",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 49,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "slo:sli_error:ratio_rate1h{sloth_service=\"queues\", sloth_slo=\"dlq\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"dlq\"}",
+          "legendFormat": "1h (page > 14,4)"
+        },
+        {
+          "refId": "B",
+          "expr": "slo:sli_error:ratio_rate6h{sloth_service=\"queues\", sloth_slo=\"dlq\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"dlq\"}",
+          "legendFormat": "6h (page > 6)"
+        },
+        {
+          "refId": "C",
+          "expr": "slo:sli_error:ratio_rate3d{sloth_service=\"queues\", sloth_slo=\"dlq\"} / slo:error_budget:ratio{sloth_service=\"queues\", sloth_slo=\"dlq\"}",
+          "legendFormat": "3d (ticket > 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

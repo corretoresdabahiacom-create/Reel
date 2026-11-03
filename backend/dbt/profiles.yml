@@ -1,0 +1,21 @@
+# Perfil de exemplo. Local: Postgres (validado). Produção: BigQuery (macros xdb_* têm implementação bigquery__, NÃO validada neste ambiente).
+nexusreel:
+  target: "{{ env_var('DBT_TARGET', 'local') }}"
+  outputs:
+    local:
+      type: postgres
+      host: "{{ env_var('DWH_HOST', '127.0.0.1') }}"
+      port: "{{ env_var('DWH_PORT', '55432') | as_number }}"
+      user: "{{ env_var('DWH_USER', 'postgres') }}"
+      password: "{{ env_var('DWH_PASSWORD', '') }}"
+      dbname: "{{ env_var('DWH_DB', 'nexus_dwh') }}"
+      schema: public
+      threads: 4
+    prod:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('BQ_PROJECT', 'nexusreel-prod') }}"
+      dataset: analytics
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      keyfile: "{{ env_var('BQ_KEYFILE', '') }}"
+      threads: 8

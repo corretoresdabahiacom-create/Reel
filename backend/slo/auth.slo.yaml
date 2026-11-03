@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: auth
+labels: { owner: backend, team: backend }
+slos:
+  - name: availability
+    objective: 99.95
+    sliType: availability
+    description: "Disponibilidade do login/auth (rotas /auth/*)."
+    sli: { events: { error_query: 'sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[{{.window}}]))', total_query: 'sum(rate(http_requests_total{route=~".*/auth/.*"}[{{.window}}]))' } }
+  - name: latency
+    objective: 95
+    sliType: latency
+    description: "p95 do auth < 500 ms."
+    sli: { events: { error_query: 'sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[{{.window}}])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[{{.window}}]))', total_query: 'sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[{{.window}}]))' } }

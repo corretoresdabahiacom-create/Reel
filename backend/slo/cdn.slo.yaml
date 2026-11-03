@@ -1,0 +1,14 @@
+version: "prometheus/v1"
+service: cdn
+labels: { owner: infra, team: infra }
+slos:
+  - name: availability
+    objective: 99.95
+    sliType: availability
+    description: "Disponibilidade da CDN medida por sonda sintética externa (blackbox exporter, job=cdn)."
+    sli: { events: { error_query: 'sum(count_over_time(probe_success{job="cdn"}[{{.window}}])) - sum(sum_over_time(probe_success{job="cdn"}[{{.window}}]))', total_query: 'sum(count_over_time(probe_success{job="cdn"}[{{.window}}]))' } }
+  - name: thumbnail-latency
+    objective: 95
+    sliType: latency
+    description: "p95 de thumbnails < 200 ms (sonda job=cdn-thumb)."
+    sli: { events: { error_query: 'sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[{{.window}}:1m]))', total_query: 'sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[{{.window}}]))' } }

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>{{subject}}</title></head>
+<body style="margin:0;padding:0;background:#f4f2fb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1d1b26">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2fb;padding:24px 12px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;padding:28px 24px">
+        <tr><td style="font-size:13px;font-weight:700;letter-spacing:.04em;color:#7c3aed">NEXUSREEL</td></tr>
+        <tr><td style="padding-top:14px;font-size:20px;line-height:1.35;font-weight:700">{{heading}}</td></tr>
+        {{#message}}<tr><td style="padding-top:14px"><div style="border-left:3px solid #c4b5fd;padding:8px 12px;background:#f7f5ff;border-radius:6px;font-size:15px;line-height:1.5;white-space:pre-wrap">{{message}}</div></td></tr>{{/message}}
+        <tr><td style="padding-top:16px;font-size:14px;color:#55526a">{{fileLabel}}: <b style="color:#1d1b26">{{fileName}}</b></td></tr>
+        <tr><td style="padding-top:20px"><a href="{{link}}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 22px;border-radius:12px">{{button}}</a></td></tr>
+        <tr><td style="padding-top:14px;font-size:13px;color:#55526a">{{expires}}</td></tr>
+        {{#passwordNote}}<tr><td style="padding-top:6px;font-size:13px;color:#55526a">{{passwordNote}}</td></tr>{{/passwordNote}}
+        <tr><td style="padding-top:22px;font-size:12px;line-height:1.5;color:#8a879c;border-top:1px solid #eeeaf7">{{footer}}<br><span style="word-break:break-all">{{link}}</span></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

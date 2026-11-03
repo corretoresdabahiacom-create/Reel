@@ -1,0 +1,1074 @@
+# GERADO por tools/slo-generator a partir de slo/*.slo.yaml — NÃO editar à mão (npm run slo:generate).
+groups:
+  # origem: slo/api.slo.yaml
+  - name: slo-sli-api-availability
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[5m]))) / (sum(rate(http_requests_total[5m])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[30m]))) / (sum(rate(http_requests_total[30m])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[1h]))) / (sum(rate(http_requests_total[1h])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[2h]))) / (sum(rate(http_requests_total[2h])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[6h]))) / (sum(rate(http_requests_total[6h])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[1d]))) / (sum(rate(http_requests_total[1d])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[3d]))) / (sum(rate(http_requests_total[3d])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[30d]))) / (sum(rate(http_requests_total[30d])))
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+  - name: slo-meta-api-availability
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.9990000000000001)
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.001)
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="api", sloth_slo="availability"} / slo:error_budget:ratio{sloth_service="api", sloth_slo="availability"}
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="api", sloth_slo="availability"}
+        labels: { sloth_service: "api", sloth_slo: "availability" }
+  - name: slo-alerts-api-availability
+    rules:
+      - alert: SLOBurnRate_api_availability_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="api", sloth_slo="availability"} > (14.4 * 0.001)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="api", sloth_slo="availability"} > (14.4 * 0.001)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "availability" }
+        annotations: { summary: "api/availability: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_availability_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="availability"} > (6 * 0.001)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="api", sloth_slo="availability"} > (6 * 0.001)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "availability" }
+        annotations: { summary: "api/availability: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_availability_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="api", sloth_slo="availability"} > (1 * 0.001)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="availability"} > (1 * 0.001)
+        labels: { severity: ticket, owner: "backend", sloth_service: "api", sloth_slo: "availability" }
+        annotations: { summary: "api/availability: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-api-latency-read
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[5m])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[5m]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[5m])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[30m])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[30m]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[30m])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[1h])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[1h]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[1h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[2h])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[2h]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[2h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[6h])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[6h]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[6h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[1d])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[1d]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[1d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[3d])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[3d]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[3d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method="GET"}[30d])) - sum(rate(http_request_duration_seconds_bucket{method="GET",le="0.3"}[30d]))) / (sum(rate(http_request_duration_seconds_count{method="GET"}[30d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+  - name: slo-meta-api-latency-read
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="api", sloth_slo="latency-read"} / slo:error_budget:ratio{sloth_service="api", sloth_slo="latency-read"}
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="api", sloth_slo="latency-read"}
+        labels: { sloth_service: "api", sloth_slo: "latency-read" }
+  - name: slo-alerts-api-latency-read
+    rules:
+      - alert: SLOBurnRate_api_latency_read_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="api", sloth_slo="latency-read"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="api", sloth_slo="latency-read"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "latency-read" }
+        annotations: { summary: "api/latency-read: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_latency_read_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="latency-read"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="api", sloth_slo="latency-read"} > (6 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "latency-read" }
+        annotations: { summary: "api/latency-read: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_latency_read_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="api", sloth_slo="latency-read"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="latency-read"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "backend", sloth_service: "api", sloth_slo: "latency-read" }
+        annotations: { summary: "api/latency-read: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-api-latency-write
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[5m])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[5m]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[5m])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[30m])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[30m]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[30m])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[1h])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[1h]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[1h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[2h])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[2h]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[2h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[6h])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[6h]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[6h])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[1d])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[1d]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[1d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[3d])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[3d]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[3d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{method!="GET"}[30d])) - sum(rate(http_request_duration_seconds_bucket{method!="GET",le="1"}[30d]))) / (sum(rate(http_request_duration_seconds_count{method!="GET"}[30d])))
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+  - name: slo-meta-api-latency-write
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="api", sloth_slo="latency-write"} / slo:error_budget:ratio{sloth_service="api", sloth_slo="latency-write"}
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="api", sloth_slo="latency-write"}
+        labels: { sloth_service: "api", sloth_slo: "latency-write" }
+  - name: slo-alerts-api-latency-write
+    rules:
+      - alert: SLOBurnRate_api_latency_write_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="api", sloth_slo="latency-write"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="api", sloth_slo="latency-write"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "latency-write" }
+        annotations: { summary: "api/latency-write: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_latency_write_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="latency-write"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="api", sloth_slo="latency-write"} > (6 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "api", sloth_slo: "latency-write" }
+        annotations: { summary: "api/latency-write: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_api_latency_write_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="api", sloth_slo="latency-write"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="api", sloth_slo="latency-write"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "backend", sloth_service: "api", sloth_slo: "latency-write" }
+        annotations: { summary: "api/latency-write: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#api", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/auth.slo.yaml
+  - name: slo-sli-auth-availability
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[5m]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[5m])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[30m]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[30m])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[1h]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[1h])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[2h]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[2h])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[6h]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[6h])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[1d]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[1d])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[3d]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[3d])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(http_requests_total{route=~".*/auth/.*",status=~"5.."}[30d]))) / (sum(rate(http_requests_total{route=~".*/auth/.*"}[30d])))
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+  - name: slo-meta-auth-availability
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.9995)
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.0005)
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="auth", sloth_slo="availability"} / slo:error_budget:ratio{sloth_service="auth", sloth_slo="availability"}
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="auth", sloth_slo="availability"}
+        labels: { sloth_service: "auth", sloth_slo: "availability" }
+  - name: slo-alerts-auth-availability
+    rules:
+      - alert: SLOBurnRate_auth_availability_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="auth", sloth_slo="availability"} > (14.4 * 0.0005)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="auth", sloth_slo="availability"} > (14.4 * 0.0005)
+        labels: { severity: page, owner: "backend", sloth_service: "auth", sloth_slo: "availability" }
+        annotations: { summary: "auth/availability: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_auth_availability_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="auth", sloth_slo="availability"} > (6 * 0.0005)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="auth", sloth_slo="availability"} > (6 * 0.0005)
+        labels: { severity: page, owner: "backend", sloth_service: "auth", sloth_slo: "availability" }
+        annotations: { summary: "auth/availability: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_auth_availability_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="auth", sloth_slo="availability"} > (1 * 0.0005)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="auth", sloth_slo="availability"} > (1 * 0.0005)
+        labels: { severity: ticket, owner: "backend", sloth_service: "auth", sloth_slo: "availability" }
+        annotations: { summary: "auth/availability: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-auth-latency
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[5m])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[5m]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[5m])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[30m])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[30m]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[30m])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[1h])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[1h]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[1h])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[2h])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[2h]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[2h])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[6h])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[6h]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[6h])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[1d])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[1d]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[1d])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[3d])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[3d]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[3d])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[30d])) - sum(rate(http_request_duration_seconds_bucket{route=~".*/auth/.*",le="0.5"}[30d]))) / (sum(rate(http_request_duration_seconds_count{route=~".*/auth/.*"}[30d])))
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+  - name: slo-meta-auth-latency
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="auth", sloth_slo="latency"} / slo:error_budget:ratio{sloth_service="auth", sloth_slo="latency"}
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="auth", sloth_slo="latency"}
+        labels: { sloth_service: "auth", sloth_slo: "latency" }
+  - name: slo-alerts-auth-latency
+    rules:
+      - alert: SLOBurnRate_auth_latency_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="auth", sloth_slo="latency"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="auth", sloth_slo="latency"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "auth", sloth_slo: "latency" }
+        annotations: { summary: "auth/latency: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_auth_latency_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="auth", sloth_slo="latency"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="auth", sloth_slo="latency"} > (6 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "auth", sloth_slo: "latency" }
+        annotations: { summary: "auth/latency: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_auth_latency_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="auth", sloth_slo="latency"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="auth", sloth_slo="latency"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "backend", sloth_service: "auth", sloth_slo: "latency" }
+        annotations: { summary: "auth/latency: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#auth", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/cdn.slo.yaml
+  - name: slo-sli-cdn-availability
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[5m])) - sum(sum_over_time(probe_success{job="cdn"}[5m]))) / (sum(count_over_time(probe_success{job="cdn"}[5m])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[30m])) - sum(sum_over_time(probe_success{job="cdn"}[30m]))) / (sum(count_over_time(probe_success{job="cdn"}[30m])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[1h])) - sum(sum_over_time(probe_success{job="cdn"}[1h]))) / (sum(count_over_time(probe_success{job="cdn"}[1h])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[2h])) - sum(sum_over_time(probe_success{job="cdn"}[2h]))) / (sum(count_over_time(probe_success{job="cdn"}[2h])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[6h])) - sum(sum_over_time(probe_success{job="cdn"}[6h]))) / (sum(count_over_time(probe_success{job="cdn"}[6h])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[1d])) - sum(sum_over_time(probe_success{job="cdn"}[1d]))) / (sum(count_over_time(probe_success{job="cdn"}[1d])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[3d])) - sum(sum_over_time(probe_success{job="cdn"}[3d]))) / (sum(count_over_time(probe_success{job="cdn"}[3d])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(count_over_time(probe_success{job="cdn"}[30d])) - sum(sum_over_time(probe_success{job="cdn"}[30d]))) / (sum(count_over_time(probe_success{job="cdn"}[30d])))
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+  - name: slo-meta-cdn-availability
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.9995)
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.0005)
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="cdn", sloth_slo="availability"} / slo:error_budget:ratio{sloth_service="cdn", sloth_slo="availability"}
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="cdn", sloth_slo="availability"}
+        labels: { sloth_service: "cdn", sloth_slo: "availability" }
+  - name: slo-alerts-cdn-availability
+    rules:
+      - alert: SLOBurnRate_cdn_availability_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="cdn", sloth_slo="availability"} > (14.4 * 0.0005)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="cdn", sloth_slo="availability"} > (14.4 * 0.0005)
+        labels: { severity: page, owner: "infra", sloth_service: "cdn", sloth_slo: "availability" }
+        annotations: { summary: "cdn/availability: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_cdn_availability_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="cdn", sloth_slo="availability"} > (6 * 0.0005)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="cdn", sloth_slo="availability"} > (6 * 0.0005)
+        labels: { severity: page, owner: "infra", sloth_service: "cdn", sloth_slo: "availability" }
+        annotations: { summary: "cdn/availability: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_cdn_availability_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="cdn", sloth_slo="availability"} > (1 * 0.0005)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="cdn", sloth_slo="availability"} > (1 * 0.0005)
+        labels: { severity: ticket, owner: "infra", sloth_service: "cdn", sloth_slo: "availability" }
+        annotations: { summary: "cdn/availability: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-cdn-thumbnail-latency
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[5m:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[5m])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[30m:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[30m])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[1h:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[1h])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[2h:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[2h])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[6h:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[6h])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[1d:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[1d])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[3d:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[3d])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(sum_over_time((probe_duration_seconds{job="cdn-thumb"} > bool 0.2)[30d:1m]))) / (sum(count_over_time(probe_duration_seconds{job="cdn-thumb"}[30d])))
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+  - name: slo-meta-cdn-thumbnail-latency
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="cdn", sloth_slo="thumbnail-latency"} / slo:error_budget:ratio{sloth_service="cdn", sloth_slo="thumbnail-latency"}
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="cdn", sloth_slo="thumbnail-latency"}
+        labels: { sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+  - name: slo-alerts-cdn-thumbnail-latency
+    rules:
+      - alert: SLOBurnRate_cdn_thumbnail_latency_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "infra", sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+        annotations: { summary: "cdn/thumbnail-latency: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_cdn_thumbnail_latency_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (6 * 0.05)
+        labels: { severity: page, owner: "infra", sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+        annotations: { summary: "cdn/thumbnail-latency: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_cdn_thumbnail_latency_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="cdn", sloth_slo="thumbnail-latency"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "infra", sloth_service: "cdn", sloth_slo: "thumbnail-latency" }
+        annotations: { summary: "cdn/thumbnail-latency: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#cdn", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/dubbing.slo.yaml
+  - name: slo-sli-dubbing-success-rate
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[5m]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[5m])) + sum(rate(job_failures_total{queue="dubbing-video"}[5m])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[30m]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30m])) + sum(rate(job_failures_total{queue="dubbing-video"}[30m])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[1h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1h])) + sum(rate(job_failures_total{queue="dubbing-video"}[1h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[2h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[2h])) + sum(rate(job_failures_total{queue="dubbing-video"}[2h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[6h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[6h])) + sum(rate(job_failures_total{queue="dubbing-video"}[6h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[1d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1d])) + sum(rate(job_failures_total{queue="dubbing-video"}[1d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[3d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[3d])) + sum(rate(job_failures_total{queue="dubbing-video"}[3d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(job_failures_total{queue="dubbing-video"}[30d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30d])) + sum(rate(job_failures_total{queue="dubbing-video"}[30d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+  - name: slo-meta-dubbing-success-rate
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.97)
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.03)
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="dubbing", sloth_slo="success-rate"} / slo:error_budget:ratio{sloth_service="dubbing", sloth_slo="success-rate"}
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="dubbing", sloth_slo="success-rate"}
+        labels: { sloth_service: "dubbing", sloth_slo: "success-rate" }
+  - name: slo-alerts-dubbing-success-rate
+    rules:
+      - alert: SLOBurnRate_dubbing_success_rate_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="dubbing", sloth_slo="success-rate"} > (14.4 * 0.03)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="dubbing", sloth_slo="success-rate"} > (14.4 * 0.03)
+        labels: { severity: page, owner: "ia", sloth_service: "dubbing", sloth_slo: "success-rate" }
+        annotations: { summary: "dubbing/success-rate: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_dubbing_success_rate_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="dubbing", sloth_slo="success-rate"} > (6 * 0.03)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="dubbing", sloth_slo="success-rate"} > (6 * 0.03)
+        labels: { severity: page, owner: "ia", sloth_service: "dubbing", sloth_slo: "success-rate" }
+        annotations: { summary: "dubbing/success-rate: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_dubbing_success_rate_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="dubbing", sloth_slo="success-rate"} > (1 * 0.03)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="dubbing", sloth_slo="success-rate"} > (1 * 0.03)
+        labels: { severity: ticket, owner: "ia", sloth_service: "dubbing", sloth_slo: "success-rate" }
+        annotations: { summary: "dubbing/success-rate: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-dubbing-latency
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[5m])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[5m]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[5m])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30m])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[30m]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30m])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1h])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[1h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[2h])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[2h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[2h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[6h])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[6h]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[6h])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1d])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[1d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[1d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[3d])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[3d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[3d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30d])) - sum(rate(job_duration_ms_bucket{queue="dubbing-video",le="600000"}[30d]))) / (sum(rate(job_duration_ms_count{queue="dubbing-video"}[30d])))
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+  - name: slo-meta-dubbing-latency
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="dubbing", sloth_slo="latency"} / slo:error_budget:ratio{sloth_service="dubbing", sloth_slo="latency"}
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="dubbing", sloth_slo="latency"}
+        labels: { sloth_service: "dubbing", sloth_slo: "latency" }
+  - name: slo-alerts-dubbing-latency
+    rules:
+      - alert: SLOBurnRate_dubbing_latency_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="dubbing", sloth_slo="latency"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="dubbing", sloth_slo="latency"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "ia", sloth_service: "dubbing", sloth_slo: "latency" }
+        annotations: { summary: "dubbing/latency: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_dubbing_latency_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="dubbing", sloth_slo="latency"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="dubbing", sloth_slo="latency"} > (6 * 0.05)
+        labels: { severity: page, owner: "ia", sloth_service: "dubbing", sloth_slo: "latency" }
+        annotations: { summary: "dubbing/latency: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_dubbing_latency_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="dubbing", sloth_slo="latency"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="dubbing", sloth_slo="latency"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "ia", sloth_service: "dubbing", sloth_slo: "latency" }
+        annotations: { summary: "dubbing/latency: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#dubbing", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/generation.slo.yaml
+  - name: slo-sli-generation-success-rate
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[5m]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[5m])) + sum(rate(job_failures_total{queue=~"generation-.*"}[5m])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[30m]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[30m])) + sum(rate(job_failures_total{queue=~"generation-.*"}[30m])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[1h]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[1h])) + sum(rate(job_failures_total{queue=~"generation-.*"}[1h])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[2h]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[2h])) + sum(rate(job_failures_total{queue=~"generation-.*"}[2h])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[6h]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[6h])) + sum(rate(job_failures_total{queue=~"generation-.*"}[6h])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[1d]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[1d])) + sum(rate(job_failures_total{queue=~"generation-.*"}[1d])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[3d]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[3d])) + sum(rate(job_failures_total{queue=~"generation-.*"}[3d])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(job_failures_total{queue=~"generation-.*"}[30d]))) / (sum(rate(job_duration_ms_count{queue=~"generation-.*"}[30d])) + sum(rate(job_failures_total{queue=~"generation-.*"}[30d])))
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+  - name: slo-meta-generation-success-rate
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.98)
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.02)
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="generation", sloth_slo="success-rate"} / slo:error_budget:ratio{sloth_service="generation", sloth_slo="success-rate"}
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="generation", sloth_slo="success-rate"}
+        labels: { sloth_service: "generation", sloth_slo: "success-rate" }
+  - name: slo-alerts-generation-success-rate
+    rules:
+      - alert: SLOBurnRate_generation_success_rate_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="generation", sloth_slo="success-rate"} > (14.4 * 0.02)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="generation", sloth_slo="success-rate"} > (14.4 * 0.02)
+        labels: { severity: page, owner: "ia", sloth_service: "generation", sloth_slo: "success-rate" }
+        annotations: { summary: "generation/success-rate: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_generation_success_rate_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="generation", sloth_slo="success-rate"} > (6 * 0.02)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="generation", sloth_slo="success-rate"} > (6 * 0.02)
+        labels: { severity: page, owner: "ia", sloth_service: "generation", sloth_slo: "success-rate" }
+        annotations: { summary: "generation/success-rate: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_generation_success_rate_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="generation", sloth_slo="success-rate"} > (1 * 0.02)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="generation", sloth_slo="success-rate"} > (1 * 0.02)
+        labels: { severity: ticket, owner: "ia", sloth_service: "generation", sloth_slo: "success-rate" }
+        annotations: { summary: "generation/success-rate: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-generation-scene-latency
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[5m])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[5m]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[5m])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[30m])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[30m]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[30m])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[1h])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[1h]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[1h])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[2h])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[2h]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[2h])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[6h])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[6h]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[6h])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[1d])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[1d]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[1d])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[3d])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[3d]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[3d])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue="generation-scene"}[30d])) - sum(rate(job_duration_ms_bucket{queue="generation-scene",le="90000"}[30d]))) / (sum(rate(job_duration_ms_count{queue="generation-scene"}[30d])))
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+  - name: slo-meta-generation-scene-latency
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="generation", sloth_slo="scene-latency"} / slo:error_budget:ratio{sloth_service="generation", sloth_slo="scene-latency"}
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="generation", sloth_slo="scene-latency"}
+        labels: { sloth_service: "generation", sloth_slo: "scene-latency" }
+  - name: slo-alerts-generation-scene-latency
+    rules:
+      - alert: SLOBurnRate_generation_scene_latency_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="generation", sloth_slo="scene-latency"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="generation", sloth_slo="scene-latency"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "ia", sloth_service: "generation", sloth_slo: "scene-latency" }
+        annotations: { summary: "generation/scene-latency: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_generation_scene_latency_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="generation", sloth_slo="scene-latency"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="generation", sloth_slo="scene-latency"} > (6 * 0.05)
+        labels: { severity: page, owner: "ia", sloth_service: "generation", sloth_slo: "scene-latency" }
+        annotations: { summary: "generation/scene-latency: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_generation_scene_latency_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="generation", sloth_slo="scene-latency"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="generation", sloth_slo="scene-latency"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "ia", sloth_service: "generation", sloth_slo: "scene-latency" }
+        annotations: { summary: "generation/scene-latency: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#generation", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/publication.slo.yaml
+  - name: slo-sli-publication-success-rate
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(publication_failure_total[5m]))) / (sum(rate(publication_success_total[5m])) + sum(rate(publication_failure_total[5m])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(publication_failure_total[30m]))) / (sum(rate(publication_success_total[30m])) + sum(rate(publication_failure_total[30m])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(publication_failure_total[1h]))) / (sum(rate(publication_success_total[1h])) + sum(rate(publication_failure_total[1h])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(publication_failure_total[2h]))) / (sum(rate(publication_success_total[2h])) + sum(rate(publication_failure_total[2h])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(publication_failure_total[6h]))) / (sum(rate(publication_success_total[6h])) + sum(rate(publication_failure_total[6h])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(publication_failure_total[1d]))) / (sum(rate(publication_success_total[1d])) + sum(rate(publication_failure_total[1d])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(publication_failure_total[3d]))) / (sum(rate(publication_success_total[3d])) + sum(rate(publication_failure_total[3d])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(publication_failure_total[30d]))) / (sum(rate(publication_success_total[30d])) + sum(rate(publication_failure_total[30d])))
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+  - name: slo-meta-publication-success-rate
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.97)
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.03)
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="publication", sloth_slo="success-rate"} / slo:error_budget:ratio{sloth_service="publication", sloth_slo="success-rate"}
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="publication", sloth_slo="success-rate"}
+        labels: { sloth_service: "publication", sloth_slo: "success-rate" }
+  - name: slo-alerts-publication-success-rate
+    rules:
+      - alert: SLOBurnRate_publication_success_rate_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="publication", sloth_slo="success-rate"} > (14.4 * 0.03)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="publication", sloth_slo="success-rate"} > (14.4 * 0.03)
+        labels: { severity: page, owner: "backend", sloth_service: "publication", sloth_slo: "success-rate" }
+        annotations: { summary: "publication/success-rate: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_publication_success_rate_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="publication", sloth_slo="success-rate"} > (6 * 0.03)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="publication", sloth_slo="success-rate"} > (6 * 0.03)
+        labels: { severity: page, owner: "backend", sloth_service: "publication", sloth_slo: "success-rate" }
+        annotations: { summary: "publication/success-rate: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_publication_success_rate_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="publication", sloth_slo="success-rate"} > (1 * 0.03)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="publication", sloth_slo="success-rate"} > (1 * 0.03)
+        labels: { severity: ticket, owner: "backend", sloth_service: "publication", sloth_slo: "success-rate" }
+        annotations: { summary: "publication/success-rate: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-publication-latency
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[5m])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[5m]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[5m])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[30m])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[30m]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[30m])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[1h])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[1h]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[1h])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[2h])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[2h]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[2h])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[6h])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[6h]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[6h])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[1d])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[1d]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[1d])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[3d])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[3d]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[3d])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[30d])) - sum(rate(job_duration_ms_bucket{queue=~"publication-.*",le="300000"}[30d]))) / (sum(rate(job_duration_ms_count{queue=~"publication-.*"}[30d])))
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+  - name: slo-meta-publication-latency
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.95)
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.05)
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="publication", sloth_slo="latency"} / slo:error_budget:ratio{sloth_service="publication", sloth_slo="latency"}
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="publication", sloth_slo="latency"}
+        labels: { sloth_service: "publication", sloth_slo: "latency" }
+  - name: slo-alerts-publication-latency
+    rules:
+      - alert: SLOBurnRate_publication_latency_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="publication", sloth_slo="latency"} > (14.4 * 0.05)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="publication", sloth_slo="latency"} > (14.4 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "publication", sloth_slo: "latency" }
+        annotations: { summary: "publication/latency: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_publication_latency_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="publication", sloth_slo="latency"} > (6 * 0.05)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="publication", sloth_slo="latency"} > (6 * 0.05)
+        labels: { severity: page, owner: "backend", sloth_service: "publication", sloth_slo: "latency" }
+        annotations: { summary: "publication/latency: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_publication_latency_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="publication", sloth_slo="latency"} > (1 * 0.05)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="publication", sloth_slo="latency"} > (1 * 0.05)
+        labels: { severity: ticket, owner: "backend", sloth_service: "publication", sloth_slo: "latency" }
+        annotations: { summary: "publication/latency: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#publication", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  # origem: slo/queues.slo.yaml
+  - name: slo-sli-queues-depth
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (count(max_over_time(queue_depth[5m]) > 500) or vector(0)) / (count(max_over_time(queue_depth[5m])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (count(max_over_time(queue_depth[30m]) > 500) or vector(0)) / (count(max_over_time(queue_depth[30m])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (count(max_over_time(queue_depth[1h]) > 500) or vector(0)) / (count(max_over_time(queue_depth[1h])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (count(max_over_time(queue_depth[2h]) > 500) or vector(0)) / (count(max_over_time(queue_depth[2h])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (count(max_over_time(queue_depth[6h]) > 500) or vector(0)) / (count(max_over_time(queue_depth[6h])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (count(max_over_time(queue_depth[1d]) > 500) or vector(0)) / (count(max_over_time(queue_depth[1d])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (count(max_over_time(queue_depth[3d]) > 500) or vector(0)) / (count(max_over_time(queue_depth[3d])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (count(max_over_time(queue_depth[30d]) > 500) or vector(0)) / (count(max_over_time(queue_depth[30d])))
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+  - name: slo-meta-queues-depth
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.99)
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.01)
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="queues", sloth_slo="depth"} / slo:error_budget:ratio{sloth_service="queues", sloth_slo="depth"}
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="queues", sloth_slo="depth"}
+        labels: { sloth_service: "queues", sloth_slo: "depth" }
+  - name: slo-alerts-queues-depth
+    rules:
+      - alert: SLOBurnRate_queues_depth_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="queues", sloth_slo="depth"} > (14.4 * 0.01)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="queues", sloth_slo="depth"} > (14.4 * 0.01)
+        labels: { severity: page, owner: "infra", sloth_service: "queues", sloth_slo: "depth" }
+        annotations: { summary: "queues/depth: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_queues_depth_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="queues", sloth_slo="depth"} > (6 * 0.01)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="queues", sloth_slo="depth"} > (6 * 0.01)
+        labels: { severity: page, owner: "infra", sloth_service: "queues", sloth_slo: "depth" }
+        annotations: { summary: "queues/depth: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_queues_depth_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="queues", sloth_slo="depth"} > (1 * 0.01)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="queues", sloth_slo="depth"} > (1 * 0.01)
+        labels: { severity: ticket, owner: "infra", sloth_service: "queues", sloth_slo: "depth" }
+        annotations: { summary: "queues/depth: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }
+  - name: slo-sli-queues-dlq
+    rules:
+      - record: slo:sli_error:ratio_rate5m
+        expr: |
+          (count(max_over_time(dlq_size[5m]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[5m])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate30m
+        expr: |
+          (count(max_over_time(dlq_size[30m]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[30m])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate1h
+        expr: |
+          (count(max_over_time(dlq_size[1h]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[1h])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate2h
+        expr: |
+          (count(max_over_time(dlq_size[2h]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[2h])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate6h
+        expr: |
+          (count(max_over_time(dlq_size[6h]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[6h])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate1d
+        expr: |
+          (count(max_over_time(dlq_size[1d]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[1d])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate3d
+        expr: |
+          (count(max_over_time(dlq_size[3d]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[3d])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:sli_error:ratio_rate30d
+        expr: |
+          (count(max_over_time(dlq_size[30d]) >= 50) or vector(0)) / (count(max_over_time(dlq_size[30d])))
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+  - name: slo-meta-queues-dlq
+    rules:
+      - record: slo:objective:ratio
+        expr: vector(0.99)
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:error_budget:ratio
+        expr: vector(0.01)
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:period_burn_rate:ratio
+        expr: slo:sli_error:ratio_rate30d{sloth_service="queues", sloth_slo="dlq"} / slo:error_budget:ratio{sloth_service="queues", sloth_slo="dlq"}
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+      - record: slo:period_error_budget_remaining:ratio
+        expr: 1 - slo:period_burn_rate:ratio{sloth_service="queues", sloth_slo="dlq"}
+        labels: { sloth_service: "queues", sloth_slo: "dlq" }
+  - name: slo-alerts-queues-dlq
+    rules:
+      - alert: SLOBurnRate_queues_dlq_1h
+        expr: |
+          slo:sli_error:ratio_rate1h{sloth_service="queues", sloth_slo="dlq"} > (14.4 * 0.01)
+          and
+          slo:sli_error:ratio_rate5m{sloth_service="queues", sloth_slo="dlq"} > (14.4 * 0.01)
+        labels: { severity: page, owner: "infra", sloth_service: "queues", sloth_slo: "dlq" }
+        annotations: { summary: "queues/dlq: Orçamento de erro consumido 14,4x mais rápido (1h/5m)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_queues_dlq_6h
+        expr: |
+          slo:sli_error:ratio_rate6h{sloth_service="queues", sloth_slo="dlq"} > (6 * 0.01)
+          and
+          slo:sli_error:ratio_rate30m{sloth_service="queues", sloth_slo="dlq"} > (6 * 0.01)
+        labels: { severity: page, owner: "infra", sloth_service: "queues", sloth_slo: "dlq" }
+        annotations: { summary: "queues/dlq: Orçamento consumido 6x mais rápido (6h/30m)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }
+      - alert: SLOBurnRate_queues_dlq_3d
+        expr: |
+          slo:sli_error:ratio_rate3d{sloth_service="queues", sloth_slo="dlq"} > (1 * 0.01)
+          and
+          slo:sli_error:ratio_rate6h{sloth_service="queues", sloth_slo="dlq"} > (1 * 0.01)
+        labels: { severity: ticket, owner: "infra", sloth_service: "queues", sloth_slo: "dlq" }
+        annotations: { summary: "queues/dlq: Orçamento consumido acima do ritmo (3d/6h)", runbook: "docs/SRE/SLOs.md#queues", dashboard: "dashboards/sre/slo-burn-rate.json" }

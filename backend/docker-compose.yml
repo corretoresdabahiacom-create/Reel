@@ -1,0 +1,80 @@
+# Ambiente completo local (gratuito): `docker compose up --build` → API em :8787, Bull Board em /admin/queues.
+# Arquivos no volume `storage` (compartilhado por API e worker). Produção gratuita: docker-compose.free.yml (docs/FREE.md).
+# Observabilidade opcional: `docker compose --profile observability up` (Prometheus :9090, Grafana :3000, Jaeger :16686).
+x-app-env: &app-env
+  NODE_ENV: development
+  DATABASE_URL: postgres://nexus:nexus@postgres:5432/nexusreel
+  REDIS_URL: redis://redis:6379
+  JWT_SECRET: ${JWT_SECRET:-dev-only-jwt-secret-change-me-0123456789abcdef}
+  DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+  STORAGE_DRIVER: local # MinIO comunitário foi aposentado em 2025; o driver S3 continua no código para migrar depois
+  LOCAL_STORAGE_DIR: /data/storage
+  PUBLIC_API_URL: http://localhost:8787
+  PUBLIC_APP_URL: http://localhost:5173
+  CORS_ORIGINS: http://localhost:5173,http://localhost:8080
+  MOCK_OAUTH: "true"
+  PLATFORM_MODE: mock
+  PAYMENTS_MODE: mock
+  AI_VIDEO_PROVIDER: mock
+  AI_TTS_PROVIDER: ${AI_TTS_PROVIDER:-open} # melhor voz aberta instalada; sem modelo cai para o espeak-ng
+  AI_MUSIC_PROVIDER: ${AI_MUSIC_PROVIDER:-composer}
+  AI_TTS_FALLBACK: espeak
+  AI_STT_PROVIDER: ${AI_STT_PROVIDER:-whisper}
+  AI_MODERATION_PROVIDER: mock
+  BULL_BOARD_ENABLED: "true"
+  METRICS_TOKEN: dev-metrics-token
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: nexus, POSTGRES_PASSWORD: nexus, POSTGRES_DB: nexusreel }
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U nexus -d nexusreel"], interval: 5s, timeout: 3s, retries: 20 }
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"] # BullMQ exige noeviction
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
+  migrate:
+    build: .
+    command: ["node", "dist/db/migrate.js", "up"]
+    environment: *app-env
+    depends_on: { postgres: { condition: service_healthy } }
+    restart: "no"
+  api:
+    build: .
+    ports: ["8787:8787"]
+    environment: *app-env
+    volumes: [storage:/data/storage]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+  worker:
+    build: .
+    command: ["node", "--import", "./dist/instrumentation.js", "dist/worker.js"]
+    environment: *app-env
+    volumes: [storage:/data/storage]
+    ports: ["9464:9464"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    stop_grace_period: 70s # graceful shutdown espera jobs em andamento
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v2.54.1
+    volumes: [./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro, ./infra/observability/alerts.yml:/etc/prometheus/alerts.yml:ro, ./infra/observability/slo-rules.generated.yml:/etc/prometheus/slo-rules.generated.yml:ro]
+    ports: ["9090:9090"]
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:11.2.0
+    ports: ["3000:3000"]
+    environment: { GF_AUTH_ANONYMOUS_ENABLED: "true", GF_AUTH_ANONYMOUS_ORG_ROLE: Admin }
+  jaeger:
+    profiles: [observability]
+    image: jaegertracing/all-in-one:1.60
+    environment: { COLLECTOR_OTLP_ENABLED: "true" }
+    ports: ["16686:16686", "4318:4318"]
+volumes: { pgdata: {}, redisdata: {}, storage: {} }
