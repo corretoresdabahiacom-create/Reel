@@ -11480,6 +11480,7 @@ paths:
                           type: string
                         engine:
                           enum:
+                            - edge
                             - kokoro
                             - piper
                           type: string

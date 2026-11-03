@@ -12,7 +12,7 @@ import { conflict, notFound, unprocessable } from '../../utils/errors.js';
  */
 export const SECTIONS_FLAG = 'ff_sections';
 export const SECTION_MAX_SEC = 15;
-export const SECTION_MAX_COUNT = 12;
+export const SECTION_MAX_COUNT = 20; // 20 × 15 s = 300 s (5 min), o teto do vídeo final
 export const MOTIONS = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'still', 'human', 'talk'] as const;
 export type Motion = (typeof MOTIONS)[number];
 /** O movimento viaja no começo do `prompt` da cena ("[mov:zoom_in] texto livre"): sem coluna nova, sem mudar o contrato da API. */

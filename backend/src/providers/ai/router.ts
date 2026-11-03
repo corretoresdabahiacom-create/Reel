@@ -29,6 +29,8 @@ const mod: Record<string, ModerationProvider> = { mock: new MockModeration(), op
 
 /** Circuit breaker em Redis (compartilhado entre workers): 3 falhas em 5 min abrem o circuito por 10 min → usa o provedor B. */
 const FAIL_N = 3, FAIL_WINDOW = 300, OPEN_SEC = 600;
+/** Fala de cada seção: 14,65 s + 0,35 s de respiro = 15 s; 20 seções fecham 300 s. */
+const SCENE_SPEECH_MAX_SEC = 14.65;
 export const breakerOpen = async (p: string) => (await redis.exists(`cb:open:${p}`)) === 1;
 async function recordFailure(p: string): Promise<void> {
   m.aiFailures.inc({ provider: p }); const k = `cb:fail:${p}`; const n = await redis.incr(k); if (n === 1) await redis.expire(k, FAIL_WINDOW);
@@ -117,7 +119,11 @@ const ai: AIProvider = {
               try { const alt = await tts.espeak!.synthesize(x.text, locale, { gender: opts.voiceGender ?? 'female' }); const w2 = join(dir, `n${i}b.${alt.ext}`); await writeFile(w2, alt.audio); if ((await meanVolumeDb(w2)) > -50) { wav = w2; logger.warn({ scene: i }, 'tts_silencioso_usou_reserva'); } } catch { /* mantém */ }
             }
             wavs.push(wav);
-            const speech = await ffprobeDuration(wav); const dur = Math.max(1.5, Math.round((speech + 0.35) * 100) / 100);
+            let speech = await ffprobeDuration(wav);
+            if (speech > SCENE_SPEECH_MAX_SEC) { // seção de no máximo 15 s (20 seções = 5 min): fala mais lenta que o previsto é acelerada até 1,35× para caber
+              const w3 = join(dir, `n${i}c.wav`); try { await ffmpeg(['-i', wav, '-af', `atempo=${Math.min(1.35, speech / SCENE_SPEECH_MAX_SEC + 0.005).toFixed(3)}`, '-ar', '22050', w3]); wav = w3; speech = await ffprobeDuration(wav); } catch { /* mantém a fala original */ }
+            }
+            const dur = Math.max(1.5, Math.min(15, Math.round((speech + 0.35) * 100) / 100));
             cues.push(...speechCues(x.text, t + 0.1, Math.max(0.5, speech))); segs.push({ dur }); t += dur;
           }
           narration = join(dir, 'nar.wav');

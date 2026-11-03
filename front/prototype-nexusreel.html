@@ -2392,7 +2392,7 @@ function FinalVideo({ url, scenes, settings, plan, projectId, id = "final-video"
 }
 
 /* ---------- Seções de até 15 s (ff_sections): foto + o que a imagem faz + o que falar ---------- */
-const SEC_MAX = 15, SEC_WPS = 2.6, SEC_MAX_COUNT = 12;
+const SEC_MAX = 15, SEC_WPS = 2.6, SEC_MAX_COUNT = 20;
 const SEC_MOTIONS = [["zoom_in", "Aproximar"], ["zoom_out", "Afastar"], ["pan_left", "Ir para a esquerda"], ["pan_right", "Ir para a direita"], ["still", "Parada"]];
 /** O que a pessoa escreve em "o que a foto faz" escolhe o movimento da câmera (aproxima, afasta, esquerda, direita, parada). */
 const secGuessMotion = (t, cur) => { const s = (t || "").toLowerCase(); const m = /(afast|zoom out|longe)/.test(s) ? "zoom_out" : /(aproxim|zoom|perto|detalhe)/.test(s) ? "zoom_in" : /(esquerda)/.test(s) ? "pan_left" : /(direita)/.test(s) ? "pan_right" : /(par(ad|e)|fix[ao]|sem movimento)/.test(s) ? "still" : null; return m && m !== cur ? { motion: m } : {}; };

@@ -78,6 +78,28 @@ describe('PUT /projects/{id}/sections', () => {
     const dur = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).stdout.toString());
     expect(Buffer.compare(hash('0.2'), hash(String(Math.max(0.5, dur - 0.5))))).not.toBe(0);
   }, 240_000);
+  it('limite: 20 seções de 15 s viram um único vídeo de até 5 min com áudio; a 21ª é recusada', async () => {
+    await flag(true);
+    const ref = await uploadPhoto(s);
+    const c = await http.post('/api/v1/projects').set(auth(s)).send({ title: 'Cinco minutos', script: 'Teste.', locale: 'pt-BR', photos: [ref] }); expect(c.status).toBe(201);
+    const fala = Array.from({ length: 38 }, (_, i) => `palavra${i}`).join(' ') + '.'; // ~15 s de fala
+    const mk = (n: number) => Array.from({ length: n }, (_, i) => ({ text: fala, action: '', photoIndex: 0, motion: (['zoom_in', 'zoom_out', 'pan_left', 'pan_right'] as const)[i % 4] }));
+    expect((await http.put(`/api/v1/projects/${c.body.id}/sections`).set(auth(s)).send({ sections: mk(21) })).status).toBe(400);
+    const r = await http.put(`/api/v1/projects/${c.body.id}/sections`).set(auth(s)).send({ sections: mk(20) }); expect(r.status).toBe(200); expect(r.body.sections).toHaveLength(20);
+    for (const sec of r.body.sections as { id: string }[]) { // a cena N usa o último quadro da N-1: uma de cada vez
+      expect((await http.post(`/api/v1/projects/${c.body.id}/scenes/${sec.id}/generate`).set(auth(s)).send({})).status).toBe(202);
+      await waitFor(async () => { const x = (await http.get(`/api/v1/projects/${c.body.id}`).set(auth(s))).body; return x.scenes.find((y: { id: string }) => y.id === sec.id)?.status === 'done' ? x : undefined; }, 60_000);
+    }
+    expect((await http.post(`/api/v1/projects/${c.body.id}/assemble`).set(auth(s)).send({})).status).toBe(202);
+    const ready = await waitFor(async () => { const x = (await http.get(`/api/v1/projects/${c.body.id}`).set(auth(s))).body; return x.status === 'ready' || x.status === 'failed' ? x : undefined; }, 540_000);
+    expect(ready.status).toBe('ready');
+    const key = (await pool.query<{ final_video_url: string }>('SELECT final_video_url FROM projects WHERE id=$1', [c.body.id])).rows[0]!.final_video_url; const l = refLocation(key);
+    const f = join(dir, 'cinco.mp4'); writeFileSync(f, await storage.get(l.bucket, l.key));
+    const dur = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).stdout.toString());
+    expect(dur).toBeGreaterThan(30); expect(dur).toBeLessThanOrEqual(300.5); // cada seção dura a própria fala (limitada a 15 s), nunca passa de 5 min
+    const probe = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', f]).stdout.toString(); expect(probe).toContain('audio'); expect(probe).toContain('video');
+    const vol = spawnSync('ffmpeg', ['-v', 'info', '-i', f, '-af', 'volumedetect', '-vn', '-f', 'null', '-'], { encoding: 'utf8' }).stderr.match(/mean_volume: (-?[\d.]+) dB/); expect(Number(vol?.[1])).toBeGreaterThan(-60);
+  }, 720_000);
 });
 
 import { mapArgs, humanPrompt } from '../src/providers/ai/humanMotion.js';

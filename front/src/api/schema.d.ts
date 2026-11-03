@@ -12257,7 +12257,7 @@ export interface operations {
                             /** @enum {string} */
                             commercial: "ok" | "review";
                             /** @enum {string} */
-                            engine: "kokoro" | "piper";
+                            engine: "edge" | "kokoro" | "piper";
                             /** @enum {string} */
                             gender: "female" | "male";
                             id: string;
