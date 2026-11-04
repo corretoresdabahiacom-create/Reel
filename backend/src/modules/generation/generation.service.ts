@@ -70,7 +70,7 @@ export const generationService = {
     const scene = await asUser(userId, (db) => projectsRepo.scene(db, projectId, sceneId)); if (!scene) throw notFound('Cena não encontrada');
     if (scene.status === 'generating') throw conflict('Cena já em geração', 'scene_in_progress');
     if (scene.index > 0) { const prev = await asUser(userId, async (db) => (await projectsRepo.scenes(db, projectId))[scene.index - 1]); if (!prev || prev.status !== 'done') throw conflict(`A cena ${scene.index} depende do último frame da cena anterior (ainda não concluída)`, 'previous_scene_not_ready'); }
-    if (u.plan === 'free' && u.credits < SCENE_CREDITS_FREE) throw new AppError(402, 'insufficient_credits', 'Créditos insuficientes (1 crédito por cena no plano Free)');
+    if (u.plan === 'free' && !u.is_admin && u.credits < SCENE_CREDITS_FREE) throw new AppError(402, 'insufficient_credits', 'Créditos insuficientes (1 crédito por cena no plano Free)');
     await asUser(userId, async (db) => { await projectsRepo.updateScene(db, sceneId, { status: 'generating', error_message: null, ...(regenerate ? { retried: true } : {}) }); await projectsRepo.update(db, projectId, { status: 'generating' });
       await projectsRepo.log(db, projectId, sceneId, regenerate ? 'regenerate' : 'generate', `${regenerate ? 'Refazendo' : 'Gerando'} cena ${scene.index + 1}`); });
     const job = await enqueue(Q.scene, 'scene', { projectId, sceneId, userId, chain, run: Date.now() }, { plan: u.plan, userId, jobId: `sc-${sceneId}-${Date.now()}` });
@@ -88,7 +88,7 @@ export const generationService = {
       const r = await aiProvider.generateScene({ id: scene.id, projectId: p.id, index: scene.index, text: scene.text, durationSec: scene.duration_sec, prompt: scene.prompt, referenceMode: scene.reference_mode as 'product', referenceKeys: scene.reference_images, retried: scene.retried },
         prev?.last_frame_url ? { lastFrameKey: prev.last_frame_url } : undefined, { userId: d.userId, plan: u.plan });
       if (await projectGone(p.id)) { await discardLateFiles(p.id, 'scene'); return; } // excluído durante a geração: não grava, não cobra
-      if (u.plan === 'free') { const ok = await asSystem(async (db) => { const paid = await usersRepo.debitCredits(db, d.userId, SCENE_CREDITS_FREE); if (paid) { await usersRepo.tx(db, { userId: d.userId, type: 'credits_spent', amountCents: 0, creditsDelta: -SCENE_CREDITS_FREE, source: 'generation', externalRef: `scene-${scene.id}-${r.videoKey}` }); m.credits.inc({ reason: 'scene' }, SCENE_CREDITS_FREE); } return paid; });
+      if (u.plan === 'free' && !u.is_admin) { /* administrador não gasta crédito */ const ok = await asSystem(async (db) => { const paid = await usersRepo.debitCredits(db, d.userId, SCENE_CREDITS_FREE); if (paid) { await usersRepo.tx(db, { userId: d.userId, type: 'credits_spent', amountCents: 0, creditsDelta: -SCENE_CREDITS_FREE, source: 'generation', externalRef: `scene-${scene.id}-${r.videoKey}` }); m.credits.inc({ reason: 'scene' }, SCENE_CREDITS_FREE); } return paid; });
         if (!ok) throw new AppError(402, 'insufficient_credits', 'Créditos insuficientes'); }
       await asSystem(async (db) => { await projectsRepo.updateScene(db, scene.id, { status: 'done', video_url: r.videoKey, last_frame_url: r.lastFrameKey, consistency: r.consistency, error_message: null });
         await projectsRepo.log(db, p.id, scene.id, 'done', `Cena ${scene.index + 1} concluída · consistência ${Math.round(r.consistency * 100)}%`); });

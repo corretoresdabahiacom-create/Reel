@@ -78,6 +78,18 @@ describe('PUT /projects/{id}/sections', () => {
     const dur = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).stdout.toString());
     expect(Buffer.compare(hash('0.2'), hash(String(Math.max(0.5, dur - 0.5))))).not.toBe(0);
   }, 240_000);
+  it('administrador gera sem gastar crédito; usuário comum sem crédito leva 402', async () => {
+    await flag(true);
+    for (const [admin, esperado] of [[true, 202], [false, 402]] as const) {
+      const u = await signup({ plan: 'free', credits: 0, admin });
+      const ref = await uploadPhoto(u);
+      const c = await http.post('/api/v1/projects').set(auth(u)).send({ title: 'Crédito', script: 'Teste.', locale: 'pt-BR', photos: [ref] }); expect(c.status).toBe(201);
+      const r = await http.put(`/api/v1/projects/${c.body.id}/sections`).set(auth(u)).send({ sections: [{ text: 'Uma frase curta para testar.', action: '', photoIndex: 0, motion: 'zoom_in' }] }); expect(r.status).toBe(200);
+      const g = await http.post(`/api/v1/projects/${c.body.id}/scenes/${r.body.sections[0].id}/generate`).set(auth(u)).send({}); expect(g.status).toBe(esperado);
+      if (admin) { await waitFor(async () => (await http.get(`/api/v1/projects/${c.body.id}`).set(auth(u))).body.scenes[0].status === 'done' ? true : undefined, 60_000); expect((await pool.query<{ credits: number }>('SELECT credits FROM users WHERE id=$1', [u.id])).rows[0]!.credits).toBe(0); }
+    }
+  }, 120_000);
+
   it('limite: 20 seções de 15 s viram um único vídeo de até 5 min com áudio; a 21ª é recusada', async () => {
     await flag(true);
     const ref = await uploadPhoto(s);
