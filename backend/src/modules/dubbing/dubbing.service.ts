@@ -18,9 +18,9 @@ export const dubbingService = {
     if (!(await isEnabled('dubbing_enabled', { userId, region: u.region, plan: u.plan }))) throw new AppError(503, 'dubbing_disabled', 'Dublagem temporariamente indisponível');
     const p = await asUser(userId, (db) => projectsRepo.byId(db, projectId)); if (!p) throw notFound('Projeto não encontrado'); if (!p.final_video_url) throw conflict('Monte o vídeo final antes de dublar', 'video_not_assembled');
     const targets = [...new Set(locales)].filter((l) => l !== p.source_locale); if (!targets.length) throw conflict('Nenhum idioma de destino diferente do original', 'no_target_locales');
-    const cost = targets.length * CREDITS_PER_LANGUAGE;
+    const cost = u.is_admin ? 0 : targets.length * CREDITS_PER_LANGUAGE; /* administrador não gasta crédito */
     // débito antecipado e atômico; reembolsa por idioma se falhar
-    const paid = await asSystem(async (db) => { const ok = await usersRepo.debitCredits(db, userId, cost); if (ok) { await usersRepo.tx(db, { userId, type: 'credits_spent', amountCents: 0, creditsDelta: -cost, source: 'dubbing', externalRef: `dub-${projectId}-${Date.now()}` }); m.credits.inc({ reason: 'dubbing' }, cost); } return ok; });
+    const paid = cost === 0 ? true : await asSystem(async (db) => { const ok = await usersRepo.debitCredits(db, userId, cost); if (ok) { await usersRepo.tx(db, { userId, type: 'credits_spent', amountCents: 0, creditsDelta: -cost, source: 'dubbing', externalRef: `dub-${projectId}-${Date.now()}` }); m.credits.inc({ reason: 'dubbing' }, cost); } return ok; });
     if (!paid) throw new AppError(402, 'insufficient_credits', `Créditos insuficientes (${CREDITS_PER_LANGUAGE} por idioma)`);
     const jobs = [];
     for (const locale of targets) {
@@ -37,7 +37,7 @@ export const dubbingService = {
       await asSystem((db) => db.query(`UPDATE localized_versions SET status='done', video_url=$3, subtitles_url=$4, audio_url=$5, voice=$6 WHERE project_id=$1 AND locale=$2`, [p.id, d.locale, r!.videoKey, r!.subtitlesKey, r!.audioKey, r!.voice]));
     } catch (e) {
       if (!isFinal) throw e;
-      await asSystem(async (db) => { await db.query(`UPDATE localized_versions SET status='failed' WHERE project_id=$1 AND locale=$2`, [p.id, d.locale]); await usersRepo.addCredits(db, d.userId, CREDITS_PER_LANGUAGE);
+      await asSystem(async (db) => { await db.query(`UPDATE localized_versions SET status='failed' WHERE project_id=$1 AND locale=$2`, [p.id, d.locale]); if ((await usersRepo.byId(db, d.userId))?.is_admin) return; /* nada foi cobrado */ await usersRepo.addCredits(db, d.userId, CREDITS_PER_LANGUAGE);
         await usersRepo.tx(db, { userId: d.userId, type: 'credits_refund', amountCents: 0, creditsDelta: CREDITS_PER_LANGUAGE, source: 'dubbing', externalRef: `dubrefund-${p.id}-${d.locale}-${Date.now()}` }); });
     }
   },
